@@ -27,6 +27,7 @@
     .brand strong,.brand small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .steps{flex:1 1 0;min-width:120px}
     .head-actions{min-width:0;flex:0 1 auto;align-items:center}
+    .mode-hidden{display:none!important}
     #folderBtn{min-width:0;max-width:clamp(180px,24vw,400px);display:inline-flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap}
     #folderBtn .folder-button-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     @media(max-width:1100px){#folderBtn{max-width:240px}}
@@ -104,12 +105,13 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
             <div class="field"><label for="pageSize">ขนาดกระดาษ</label><select id="pageSize"><option value="letter">US Letter</option><option value="a4">A4</option></select></div>
             <div class="field"><label for="orientation">แนวกระดาษ</label><select id="orientation"><option value="portrait">แนวตั้ง</option><option value="landscape">แนวนอน</option></select></div>
           </div>
+          <div class="section-title" style="margin-top:12px">ขนาดตาราง</div>
           <div class="row">
-            <div class="field"><label for="cols">จำนวนคอลัมน์</label><input id="cols" type="number" min="2" max="5" value="3"></div>
+            <div class="field"><label for="cols">ความกว้าง: จำนวนคอลัมน์</label><input id="cols" type="number" min="2" max="5" value="3"></div>
             <div class="field"><label for="rows">จำนวนแถว</label><input id="rows" type="number" min="2" max="5" value="4"></div>
           </div>
           <div class="field"><label for="gridHeight">ความสูงของตาราง</label><div class="range-control"><input id="gridHeight" type="range" min="360" max="680" step="10"><span class="range-value" data-value-for="gridHeight"></span></div></div>
-          <p class="hint" style="margin:0">ลดความสูงสำหรับภาพแนวนอน หรือเพิ่มความสูงสำหรับภาพแนวตั้ง</p>
+          <p class="hint" style="margin:0">ความกว้างกำหนดด้วยจำนวนคอลัมน์และขนาดกระดาษ ส่วนความสูงปรับด้วยแถบเลื่อนนี้</p>
         </div>
         <div class="section">
           <div class="section-title">เนื้อหา</div>
@@ -173,7 +175,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
           <div class="field"><label for="bundleDifficultyMode">ลำดับความยากใน Bundle</label><select id="bundleDifficultyMode"><option value="progressive">Easy → Hard (แนะนำ)</option><option value="balanced">Balanced Review</option><option value="random">Random Mix ปกติ</option></select></div>
           <p class="hint" id="bundleDifficultyNote" style="margin:0 0 10px">Puzzle แรกจะง่ายกว่า แล้วค่อย ๆ ยากขึ้น เหมาะกับชุดงานสอนจริง</p>
            <button class="btn primary" id="generateBundleBtn" style="width:100%;margin-bottom:9px"><span class="btn-icon" aria-hidden="true">✨</span>Generate All</button>
-          <div class="bundle-dropgrid">
+           <div class="bundle-dropgrid" id="bundleImageTools">
             <label class="bundle-dropzone" id="bundleColorLabel" for="bundleColorImages">
               <span class="bundle-drop-icon">C</span>
               <span class="bundle-drop-title">Color</span>
@@ -189,11 +191,12 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
             <input id="bundleColorImages" type="file" accept="image/*" multiple hidden>
             <input id="bundleBwImages" type="file" accept="image/*" multiple hidden>
           </div>
-           <button class="btn danger" id="clearBundleImages" style="width:100%;margin-top:9px"><span class="btn-icon" aria-hidden="true">🧹</span>ล้างภาพ Bundle ทั้งเซต</button>
-          <p class="hint" style="margin:10px 0 0">อัปโหลดภาพสีและภาพขาวดำแยกกัน ระบบจะจับคู่จากชื่อไฟล์/เลขไฟล์ และกระจายลง Puzzle อัตโนมัติ ถ้า Import ผิดให้กดล้างภาพทั้งเซตก่อน Import ใหม่</p>
+            <button class="btn danger" id="clearBundleImages" style="width:100%;margin-top:9px"><span class="btn-icon" aria-hidden="true">🧹</span>ล้างภาพ Bundle ทั้งเซต</button>
+           </div>
+           <p class="hint" id="bundleImageHint" style="margin:10px 0 0">อัปโหลดภาพสีและภาพขาวดำแยกกัน ระบบจะจับคู่จากชื่อไฟล์/เลขไฟล์ และกระจายลง Puzzle อัตโนมัติ ถ้า Import ผิดให้กดล้างภาพทั้งเซตก่อน Import ใหม่</p>
         </div>
-        <div class="section">
-          <div class="section-title">ภาพปริศนา</div>
+        <div class="section" id="singleImageSection">
+          <div class="section-title">ภาพปริศนา (งานเดี่ยว / Puzzle ปัจจุบัน)</div>
           <label class="upload" id="colorUploadLabel"><span class="upload-status">Colored Image (PNG/JPG)</span><span class="upload-btn">📁 เลือกไฟล์</span><input id="colorUpload" type="file" accept="image/*"></label>
           <div style="height:8px"></div>
           <label class="upload" id="bwUploadLabel"><span class="upload-status">B&amp;W Line Art (PNG/JPG/SVG)</span><span class="upload-btn">🖼️ เลือกไฟล์</span><input id="bwUpload" type="file" accept="image/*"></label>
@@ -768,6 +771,9 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       select.value=String(state.bundleIndex);
     }
     if(status){const modeLabel=state.bundleDifficultyMode==="progressive"?"5 ระดับ":state.bundleDifficultyMode==="balanced"?"ผสม 3 ระดับ":"สุ่มอิสระ";status.textContent=state.bundleEnabled?`${state.bundleCount} งาน • ${modeLabel}`:"งานเดี่ยว"}
+    $("#singleImageSection")?.classList.toggle("mode-hidden",!!state.bundleEnabled);
+    const bundleToolsVisible=!!state.bundleEnabled;
+    ["bundleImageTools","bundleImageHint"].forEach(id=>$("#"+id)?.classList.toggle("mode-hidden",!bundleToolsVisible));
     syncBundleImageButtons();
   }
   function generate(){
