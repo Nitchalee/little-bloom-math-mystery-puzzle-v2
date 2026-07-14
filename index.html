@@ -105,7 +105,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
           <div class="field"><label for="title">ชื่อใบงาน</label><input id="title" type="text"></div>
           <div class="field"><label for="subtitle">หัวข้อย่อย</label><input id="subtitle" type="text"></div>
           <div class="field"><label for="directions">คำชี้แจง</label><textarea id="directions"></textarea></div>
-          <div class="field"><label for="standard">CCSS Mapping (อัตโนมัติ)</label><input id="standard" type="text" readonly></div>
+          <div class="field"><label for="standard">CCSS Mapping (อัตโนมัติ / แก้ไขได้)</label><input id="standard" type="text" autocomplete="off" spellcheck="false"></div>
           <div class="field"><label for="copyright">ข้อความ Copyright</label><input id="copyright" type="text"></div>
           <label class="check">แสดงช่องชื่อและวันที่ <input id="showName" type="checkbox" checked></label>
           <label class="check">แสดงรหัสมาตรฐาน <input id="showStandard" type="checkbox" checked></label>
@@ -346,7 +346,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     pageSize:"letter",orientation:"portrait",cols:3,rows:4,gridHeight:560,title:"ANIMAL JUNGLE MATH PUZZLES",subtitle:"PUZZLE #1: ADDITION TO 10",
     directions:"Directions: Solve each math problem. Cut out the puzzle pieces, match each answer, and glue the pieces onto the grid.",copyright:"© Little Bloom Classroom. All rights reserved.",
     footerText:"After gluing all pieces:\n□ My favorite puzzle piece was #____ because ____________________\n□ The hardest problem for me was #____",footerFont:"Comic Neue",footerSize:11,footerWeight:"400",footerStyle:"normal",
-    standard:"K.OA.A.1, 1.OA.C.6",showName:true,showStandard:true,showBundleNumber:true,skill:"add10",eqLayout:"auto",accent:"#7656d8",
+    standard:"1.OA.C.6",standardOverride:false,showName:true,showStandard:true,showBundleNumber:true,skill:"add10",eqLayout:"auto",accent:"#7656d8",
     titleFont:"Mali",bodyFont:"Mali",titleWeight:"700",nameDateWeight:"400",subtitleWeight:"700",directionWeight:"400",standardWeight:"700",mathWeight:"400",pieceWeight:"400",answerKeyTitleWeight:"700",answerKeySubtitleWeight:"400",quickAnswerWeight:"400",titleTransform:"uppercase",titleSize:25,nameDateSize:14,subtitleSize:13.5,directionSize:9.5,standardSize:9,mathSize:32,pieceSize:28,answerKeyTitleSize:18.5,answerKeySubtitleSize:9.5,quickAnswerSize:15,
     showNumbers:true,pieceNumV:"top",pieceNumH:"right",showAnswers:true,showAnswerBlank:false,dashed:true,borderStyle:"dashed",strokeWeight:2,answerDisplayVersion:2,lowInkVersion:2,colorImage:null,bwImage:null,bwAutoImage:null,bgImage:null,bgApply:"all",bgOpacity:25,projectFolderName:"",fileBaseName:"",view:"problem",exportPreset:"all",exportMode:"pdf",pngScale:3,exportPngFullPage:true,exportPngCutPieces:false,exportRecoveryFile:true,bundleDifficultyMode:"progressive",bundleExportScope:"all",bundleExportStart:1,bundleExportEnd:10,bundleEnabled:false,bundleCount:10,bundleIndex:0,bundlePuzzles:[],pieceOrder:[],printPages:{problem:true,bw:true,color:true,bwkey:true,colorkey:true,eqkey:true},items:[]
   };
@@ -400,7 +400,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
   const skillMeta={
     add10:{series:"Series A: Basic Facts",label:"ADDITION WITHIN 10",ccss:"1.OA.C.6",note:"Fluency for addition within 10."},
     sub10:{series:"Series A: Basic Facts",label:"SUBTRACTION WITHIN 10",ccss:"1.OA.C.6",note:"Fluency for subtraction within 10."},
-    mix10:{series:"Series A: Basic Facts",label:"ADDITION & SUBTRACTION TO 10",ccss:"K.OA.A.5, 1.OA.C.6",note:"Mixed addition and subtraction facts to 10 for advanced Kindergarten, beginning Grade 1, intervention, and support."},
+     mix10:{series:"Series A: Basic Facts",label:"ADDITION & SUBTRACTION TO 10",ccss:"1.OA.C.6",note:"Mixed addition and subtraction facts to 10 for advanced Kindergarten, beginning Grade 1, intervention, and support."},
     add20:{series:"Series A: Basic Facts",label:"ADDITION WITHIN 20",ccss:"1.OA.C.6",note:"Addition within 20 using Grade 1 strategies."},
     sub20:{series:"Series A: Basic Facts",label:"SUBTRACTION WITHIN 20",ccss:"1.OA.C.6",note:"Subtraction within 20 using Grade 1 strategies."},
     mix20:{series:"Series A: Basic Facts",label:"MIXED ADDITION & SUBTRACTION WITHIN 20",ccss:"1.OA.C.6",note:"Mixed facts within 20."},
@@ -1463,8 +1463,12 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     const h=state.pageSize==="a4"?(state.orientation==="landscape"?794:1123):(state.orientation==="landscape"?816:1056);
     style.textContent=`@page{size:${paper} ${orientation};margin:0}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}html,body{margin:0!important;padding:0!important}.pages{transform:none!important;transform-origin:top left!important;margin:0!important;gap:0!important}.page{width:${w}px!important;height:${h}px!important;box-shadow:none!important;margin:0!important}}`;
   }
-  function normalizeState(){
-    if(!skillMeta[state.skill])state.skill="add10";state.standard=skillMeta[state.skill].ccss;
+   function normalizeState(){
+     if(!skillMeta[state.skill])state.skill="add10";
+     // CCSS is automatic by default, but a teacher may override it for a
+     // district-specific standard. Preserve that override across reloads.
+     if(typeof state.standardOverride!=="boolean")state.standardOverride=false;
+     if(!state.standardOverride||!String(state.standard||"").trim())state.standard=skillMeta[state.skill].ccss;
     if(!["none","solid","dashed","longdash","dotted"].includes(state.borderStyle))state.borderStyle=state.dashed?"dashed":"solid";
     if(state.bgApply==="puzzleAndKeys")state.bgApply="problemAndPieces";
     state.strokeWeight=clamp(+state.strokeWeight||0,0,6);
@@ -1654,7 +1658,24 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     },{passive:false});
   }
   $$(".tab").forEach(btn=>btn.addEventListener("click",()=>{state.view=btn.dataset.view;$$('.tab').forEach(x=>x.classList.toggle("active",x===btn));renderPages()}));
-  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{state[k]=k==="pngScale"?+e.target.value:e.target.value;if(k==="skill"){const meta=skillMeta[state.skill];state.standard=meta.ccss;state.subtitle=`PUZZLE #1: ${meta.label}`;syncControls();state.bundleEnabled?generateBundle():generate();return}if(k==="accent")document.documentElement.style.setProperty("--violet",state.accent);if(k==="pageSize"||k==="orientation")updatePrintSettings();renderPages();if(k==="bundleExportScope"||k==="bundleDifficultyMode")syncControls();updateExportFilePreview();saveLocal();if(isDecorationKey(k))askSaveDecorationDefaults()}));
+  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{
+    state[k]=k==="pngScale"?+e.target.value:e.target.value;
+    if(k==="standard"){
+      state.standardOverride=true;
+      renderPages();updateExportFilePreview();saveLocal();
+      return;
+    }
+    if(k==="skill"){
+      const meta=skillMeta[state.skill]||skillMeta.add10;
+      state.standardOverride=false;
+      state.standard=meta.ccss;
+      state.subtitle=`PUZZLE #1: ${meta.label}`;
+      syncControls();state.bundleEnabled?generateBundle():generate();return
+    }
+    if(k==="accent")document.documentElement.style.setProperty("--violet",state.accent);
+    if(k==="pageSize"||k==="orientation")updatePrintSettings();
+    renderPages();if(k==="bundleExportScope"||k==="bundleDifficultyMode")syncControls();updateExportFilePreview();saveLocal();if(isDecorationKey(k))askSaveDecorationDefaults()
+  }));
   $("#fileBaseName").addEventListener("input",e=>{const raw=e.target.value;state.fileBaseName=raw.trim()?cleanExportName(raw):"";e.target.value=state.fileBaseName;updateExportFilePreview();saveLocal()});
   ["titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","pieceSize","footerSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","gridHeight","strokeWeight"].forEach(k=>$("#"+k).addEventListener("input",e=>{state[k]=e.target.dataset.unit==="rem"?+(+e.target.value*10).toFixed(2):+e.target.value;const out=$(`[data-value-for="${k}"]`);if(out)out.textContent=e.target.dataset.unit==="rem"?remValue(state[k]):state[k]+(k==="strokeWeight"?"":" px");renderPages();saveLocal();if(isDecorationKey(k))askSaveDecorationDefaults()}));
   $("#bgOpacity").addEventListener("input",e=>{state.bgOpacity=+e.target.value;const value=$("#bgOpacityValue");if(value)value.textContent=state.bgOpacity+"%";renderPages();saveLocal();askSaveDecorationDefaults()});
@@ -1679,7 +1700,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
   $("#clearBundleImages").addEventListener("click",clearBundleImages);
   $("#earlyGridBtn").addEventListener("click",()=>{state.cols=3;state.rows=3;$("#cols").value=3;$("#rows").value=3;state.bundleEnabled?generateBundle():generate();toast("ตั้งค่า 3×3 สำหรับต้นปีหรือทักษะใหม่แล้ว")});
   $("#standardGridBtn").addEventListener("click",()=>{state.cols=3;state.rows=4;$("#cols").value=3;$("#rows").value=4;state.bundleEnabled?generateBundle():generate();toast("ตั้งค่า 3×4 สำหรับแบบฝึกมาตรฐานแล้ว")});
-  $("#referencePreset").addEventListener("click",()=>{state.pageSize="letter";state.orientation="portrait";state.cols=3;state.rows=3;state.gridHeight=560;state.skill="add10";state.standard=skillMeta.add10.ccss;state.title="ANIMAL JUNGLE MATH PUZZLES";state.subtitle="PUZZLE #1: ADDITION WITHIN 10";state.titleFont="Fredoka";state.bodyFont="Comic Neue";state.titleWeight="700";state.nameDateWeight="400";state.subtitleWeight="700";state.directionWeight="400";state.standardWeight="700";state.mathWeight="400";state.pieceWeight="400";state.footerWeight="400";state.answerKeyTitleWeight="700";state.answerKeySubtitleWeight="400";state.quickAnswerWeight="400";state.titleSize=25;state.nameDateSize=14;state.subtitleSize=13.5;state.directionSize=9.5;state.standardSize=9;state.mathSize=32;state.pieceSize=28;state.footerSize=11;state.answerKeyTitleSize=18.5;state.answerKeySubtitleSize=9.5;state.quickAnswerSize=15;state.showName=true;state.showStandard=true;state.showBundleNumber=true;state.dashed=true;state.borderStyle="dashed";state.strokeWeight=2;syncControls();generate();toast("ใช้รูปแบบตามไฟล์ตัวอย่างแล้ว");askSaveDecorationDefaults()});
+  $("#referencePreset").addEventListener("click",()=>{state.pageSize="letter";state.orientation="portrait";state.cols=3;state.rows=3;state.gridHeight=560;state.skill="add10";state.standardOverride=false;state.standard=skillMeta.add10.ccss;state.title="ANIMAL JUNGLE MATH PUZZLES";state.subtitle="PUZZLE #1: ADDITION WITHIN 10";state.titleFont="Fredoka";state.bodyFont="Comic Neue";state.titleWeight="700";state.nameDateWeight="400";state.subtitleWeight="700";state.directionWeight="400";state.standardWeight="700";state.mathWeight="400";state.pieceWeight="400";state.footerWeight="400";state.answerKeyTitleWeight="700";state.answerKeySubtitleWeight="400";state.quickAnswerWeight="400";state.titleSize=25;state.nameDateSize=14;state.subtitleSize=13.5;state.directionSize=9.5;state.standardSize=9;state.mathSize=32;state.pieceSize=28;state.footerSize=11;state.answerKeyTitleSize=18.5;state.answerKeySubtitleSize=9.5;state.quickAnswerSize=15;state.showName=true;state.showStandard=true;state.showBundleNumber=true;state.dashed=true;state.borderStyle="dashed";state.strokeWeight=2;syncControls();generate();toast("ใช้รูปแบบตามไฟล์ตัวอย่างแล้ว");askSaveDecorationDefaults()});
   $("#projectFile").addEventListener("change",e=>safeAsync(()=>loadProject(e.target.files[0]),"เปิดโปรเจกต์"));$("#colorUpload").addEventListener("change",e=>safeAsync(()=>readImage(e.target.files[0],"colorImage"),"โหลดภาพสี"));$("#bwUpload").addEventListener("change",e=>safeAsync(()=>readImage(e.target.files[0],"bwImage"),"โหลดภาพขาวดำ"));
   $("#duplicateUploadOk")?.addEventListener("click",hideDuplicateUploadModal);
   $("#duplicateUploadModal")?.addEventListener("click",e=>{if(e.target?.id==="duplicateUploadModal")hideDuplicateUploadModal()});
