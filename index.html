@@ -560,6 +560,11 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     const addCandidates=(level,source,attempts)=>{
       for(let i=0;i<attempts;i++){
         const p=makeProblem(state.skill,level),qKey=problemQuestionKey(p.q),aKey=problemAnswerKey(p.ans);
+        // Keep only candidates whose generated answer can be independently
+        // evaluated. This is a final safety net for every random skill and
+        // prevents a future generator typo from entering the worksheet.
+        const expected=evaluate(p.q);
+        if(expected===null||!answerMatches(p.ans,expected))continue;
         if(!qKey||seenQuestions.has(qKey))continue;
         p._difficultyLevel=level;p._difficultySource=source;seenQuestions.add(qKey);pool.push(p);
         if(!byAnswer.has(aKey))byAnswer.set(aKey,[]);
@@ -814,7 +819,10 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
   function answerMatches(actual,expected){
     const a=String(actual).trim();
     if(a==="")return false;
-    if(expected===null)return true;
+    // An unrecognised/unfinished question must never pass validation.
+    // Previously `null` was treated as valid, allowing malformed equations
+    // to slip into a worksheet and be exported as if they were correct.
+    if(expected===null||expected===undefined)return false;
     if(typeof expected==="number"&&Number.isFinite(expected))return Number(a)===expected;
     return a.toLowerCase()===String(expected).trim().toLowerCase();
   }
