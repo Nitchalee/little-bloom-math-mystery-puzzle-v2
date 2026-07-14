@@ -175,7 +175,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
           <div class="field"><label for="bundleDifficultyMode">ลำดับความยากใน Bundle</label><select id="bundleDifficultyMode"><option value="progressive">Easy → Hard (แนะนำ)</option><option value="balanced">Balanced Review</option><option value="random">Random Mix ปกติ</option></select></div>
           <p class="hint" id="bundleDifficultyNote" style="margin:0 0 10px">Puzzle แรกจะง่ายกว่า แล้วค่อย ๆ ยากขึ้น เหมาะกับชุดงานสอนจริง</p>
            <button class="btn primary" id="generateBundleBtn" style="width:100%;margin-bottom:9px"><span class="btn-icon" aria-hidden="true">✨</span>Generate All</button>
-           <div class="bundle-dropgrid" id="bundleImageTools">
+            <div id="bundleImageTools">
+             <div class="bundle-dropgrid">
             <label class="bundle-dropzone" id="bundleColorLabel" for="bundleColorImages">
               <span class="bundle-drop-icon">C</span>
               <span class="bundle-drop-title">Color</span>
@@ -190,7 +191,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
             </label>
             <input id="bundleColorImages" type="file" accept="image/*" multiple hidden>
             <input id="bundleBwImages" type="file" accept="image/*" multiple hidden>
-          </div>
+             </div>
             <button class="btn danger" id="clearBundleImages" style="width:100%;margin-top:9px"><span class="btn-icon" aria-hidden="true">🧹</span>ล้างภาพ Bundle ทั้งเซต</button>
            </div>
            <p class="hint" id="bundleImageHint" style="margin:10px 0 0">อัปโหลดภาพสีและภาพขาวดำแยกกัน ระบบจะจับคู่จากชื่อไฟล์/เลขไฟล์ และกระจายลง Puzzle อัตโนมัติ ถ้า Import ผิดให้กดล้างภาพทั้งเซตก่อน Import ใหม่</p>
