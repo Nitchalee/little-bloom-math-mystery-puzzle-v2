@@ -1442,24 +1442,59 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     [...document.styleSheets].forEach(sheet=>{try{[...sheet.cssRules].forEach(rule=>css+=rule.cssText+"\n")}catch{}});
     return css+`.page{box-shadow:none!important;margin:0!important}.page-background{z-index:0!important}`;
   }
-  function renderNodeToPng(node,scale=3){
-    return new Promise((resolve,reject)=>{
-      const w=node.offsetWidth,h=node.offsetHeight,clone=node.cloneNode(true);
-      clone.setAttribute("xmlns","http://www.w3.org/1999/xhtml");clone.style.boxShadow="none";clone.style.margin="0";
-      clone.style.width=w+"px";clone.style.height=h+"px";clone.style.position="relative";clone.style.overflow="hidden";
-      if(clone.classList?.contains("piece")){
-        const weight=state.borderStyle==="none"?0:clamp(+state.strokeWeight||0,0,6);
-        clone.classList.add("export-piece-cut");
-        clone.style.border=weight?`${weight}px ${borderCssStyle()} #111`:"0";
-        clone.style.boxSizing="border-box";
+  async function inlineExportImages(root){
+    // Images uploaded through the file picker are usually represented by
+    // blob: URLs. Those URLs work in the Live View, but an SVG foreignObject
+    // rendered on a canvas cannot reliably access them. Inline every image as
+    // a data URL before serializing the page so full-page PNG export matches
+    // the Live View instead of failing with a generic image-load error.
+    const images=[...root.querySelectorAll("img")];
+    await Promise.all(images.map(async img=>{
+      const src=img.getAttribute("src")||"";
+      if(!src||src.startsWith("data:"))return;
+      try{
+        const response=await fetch(src);
+        if(!response.ok)throw new Error(`HTTP ${response.status}`);
+        const blob=await response.blob();
+        img.setAttribute("src",await new Promise((resolve,reject)=>{
+          const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(blob);
+        }));
+      }catch(error){
+        // Keep the original source as a last resort. This permits ordinary
+        // same-origin image URLs to render even when fetch is unavailable.
+        console.warn("Could not inline export image",src,error);
       }
-      const xhtml=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${collectCss()}</style>${clone.outerHTML}</div>`;
-      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><foreignObject width="100%" height="100%">${xhtml}</foreignObject></svg>`;
-      const img=new Image();
-      img.onload=()=>{const canvas=document.createElement("canvas");canvas.width=w*scale;canvas.height=h*scale;const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.scale(scale,scale);ctx.drawImage(img,0,0);canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("PNG export failed")),"image/png",1)};
-      img.onerror=()=>reject(new Error("ไม่สามารถสร้าง PNG ได้"));
-      img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+    }));
+  }
+  async function renderNodeToPng(node,scale=3){
+    const w=Math.max(1,node.offsetWidth),h=Math.max(1,node.offsetHeight),clone=node.cloneNode(true);
+    clone.setAttribute("xmlns","http://www.w3.org/1999/xhtml");clone.style.boxShadow="none";clone.style.margin="0";
+    clone.style.width=w+"px";clone.style.height=h+"px";clone.style.position="relative";clone.style.overflow="hidden";
+    if(clone.classList?.contains("piece")){
+      const weight=state.borderStyle==="none"?0:clamp(+state.strokeWeight||0,0,6);
+      clone.classList.add("export-piece-cut");
+      clone.style.border=weight?`${weight}px ${borderCssStyle()} #111`:"0";
+      clone.style.boxSizing="border-box";
+    }
+    await inlineExportImages(clone);
+    const xhtml=`<div xmlns="http://www.w3.org/1999/xhtml"><style>${collectCss()}</style>${clone.outerHTML}</div>`;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><foreignObject width="100%" height="100%">${xhtml}</foreignObject></svg>`;
+    const rasterizeSvg=src=>new Promise((resolve,reject)=>{
+      const img=new Image(),fail=()=>reject(new Error("ไม่สามารถสร้าง PNG ได้: ไม่สามารถวาดหน้าเต็มพร้อมภาพประกอบ"));
+      img.onload=()=>{const canvas=document.createElement("canvas");canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);const ctx=canvas.getContext("2d");if(!ctx){fail();return}ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.scale(scale,scale);ctx.drawImage(img,0,0);canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("PNG export failed")),"image/png",1)};
+      img.onerror=fail;img.src=src;
     });
+    try{
+      // URL encoding is the fastest path. Some Chromium builds reject a
+      // foreignObject data URI containing non-ASCII text, so retry once with
+      // a base64 SVG when that path fails.
+      return await rasterizeSvg("data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg));
+    }catch(firstError){
+      try{
+        const base64=btoa(unescape(encodeURIComponent(svg)));
+        return await rasterizeSvg("data:image/svg+xml;base64,"+base64);
+      }catch{throw firstError}
+    }
   }
   const renderPageToPng=(page,scale=3)=>renderNodeToPng(page,scale);
   function pngBundlePartForPage(page){
