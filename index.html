@@ -144,7 +144,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
                 <option value="mixedReviewAll">Mixed Review All Skills</option>
               </optgroup>
               <optgroup label="Series B: Strategy Skills">
-                <option value="missingNumbers20">Missing Numbers Within 20</option><option value="missingAddend">Missing Addends</option><option value="missingSubtrahend">Missing Subtraction Numbers</option><option value="factFamilies">Fact Families Within 20</option><option value="wordProblems20">Word Problems Within 20</option>
+                <option value="missingNumbers20">Missing Numbers Within 20</option><option value="missingAddend">Missing Addends Within 20</option><option value="missingSubtrahend">Missing Subtraction Numbers Within 20</option><option value="factFamilies">Fact Families Within 20</option><option value="wordProblems20">Word Problems Within 20</option>
               </optgroup>
             </select>
           </div>
@@ -318,6 +318,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         <div class="export-card">
           <div class="export-card-title">🖨️ เลือกหน้าที่จะส่งออก / พิมพ์</div>
           <div class="export-presets">
+            <button class="export-preset" type="button" data-export-preset="keys">🖼️ เฉพาะเฉลย (3 แผ่นหลัง)</button>
             <button class="export-preset active" type="button" data-export-preset="all">📄 ทุกหน้า (6 แผ่น)</button>
             <button class="export-preset" type="button" data-export-preset="problem">📄 เฉพาะใบงานโจทย์</button>
             <button class="export-preset" type="button" data-export-preset="problemBw">📝 เฉพาะโจทย์ (BW)</button>
@@ -325,7 +326,6 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
             <button class="export-preset" type="button" data-export-preset="piecesBw">✂️ เฉพาะชิ้นส่วน B&amp;W</button>
             <button class="export-preset" type="button" data-export-preset="piecesColor">✂️ เฉพาะชิ้นส่วนสี</button>
             <button class="export-preset" type="button" data-export-preset="pieces">✂️ เฉพาะชิ้นส่วน B&amp;W + สี</button>
-            <button class="export-preset" type="button" data-export-preset="keys">🖼️ เฉพาะเฉลย (3 แผ่นหลัง)</button>
             <button class="export-preset" type="button" data-export-preset="comboBw">🧩 รวมใบงาน + Puzzle (BW)</button>
             <button class="export-preset" type="button" data-export-preset="comboColor">🧩 รวมใบงาน + Puzzle (Color)</button>
             <button class="export-preset" type="button" data-export-preset="comboAnswer">✅ รวมเฉลยภาพ (B&amp;W + สี)</button>
@@ -468,8 +468,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     doubles:{series:"Series B: Strategy Skills",label:"DOUBLES FACTS",ccss:"1.OA.C.6",note:"Known sums used as efficient facts within 20."},
     nearDoubles:{series:"Series B: Strategy Skills",label:"NEAR DOUBLES",ccss:"1.OA.C.6",note:"Create an easier known sum using doubles plus one."},
     missingNumbers20:{series:"Series B: Strategy Skills",label:"MISSING NUMBERS WITHIN 20",ccss:"1.OA.D.8, 1.OA.B.4",note:"Find the missing number in addition and subtraction equations within 20."},
-    missingAddend:{series:"Series B: Strategy Skills",label:"MISSING ADDENDS",ccss:"1.OA.D.8",note:"Find the unknown addend in any position of an addition equation."},
-    missingSubtrahend:{series:"Series B: Strategy Skills",label:"MISSING SUBTRACTION NUMBERS",ccss:"1.OA.D.8, 1.OA.B.4",note:"Find the unknown minuend or subtrahend in any position."},
+    missingAddend:{series:"Series B: Strategy Skills",label:"MISSING ADDENDS WITHIN 20",ccss:"1.OA.D.8",note:"Find the unknown addend in any position of an addition equation within 20."},
+    missingSubtrahend:{series:"Series B: Strategy Skills",label:"MISSING SUBTRACTION NUMBERS WITHIN 20",ccss:"1.OA.D.8, 1.OA.B.4",note:"Find the unknown minuend or subtrahend in any position within 20."},
     factFamilies:{series:"Series B: Strategy Skills",label:"FACT FAMILIES WITHIN 20",ccss:"1.OA.B.4, 1.OA.C.6",note:"Complete fact families within 20 by connecting addition and subtraction facts; computation supports fluency within 20."},
     wordProblems20:{series:"Series B: Strategy Skills",label:"WORD PROBLEMS WITHIN 20",ccss:"1.OA.A.1",note:"Solve add-to, take-from, put-together, and compare word problems within 20; computation also supports 1.OA.C.6."},
     tensOnes:{series:"Series C: Number Sense",label:"TENS AND ONES",ccss:"1.NBT.B.2",note:"Understand two-digit numbers as tens and ones."},
