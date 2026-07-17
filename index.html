@@ -549,13 +549,25 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     else if(type==="nearDoubles"){a=numByDifficulty(1,3,3,6,6,9,difficulty);b=a+1;ans=a+b;q=`${a} + ${b}`}
     else if(type==="missingNumbers20")return makeProblem(Math.random()<.58?"missingAddend":"missingSubtrahend",difficulty);
     else if(type==="missingAddend"){
-      a=numByDifficulty(1,4,3,7,6,9,difficulty);b=rand(1,Math.min(9,20-a));const total=a+b,form=difficulty==="easy"?0:difficulty==="hard"?rand(0,2):rand(0,1);
+      // Missing Addends Within 20 must allow the unknown addend itself to
+      // exceed 9.  The previous generator capped the second addend at 9,
+      // which made a 3x4 page mathematically incapable of producing twelve
+      // distinct answers even though the skill range is Within 20.
+      const totalMin=difficulty==="easy"?3:difficulty==="medium"?8:difficulty==="hard"?13:3;
+      const totalMax=difficulty==="easy"?10:difficulty==="medium"?16:difficulty==="hard"?20:20;
+      const knownMin=difficulty==="easy"?1:difficulty==="medium"?3:difficulty==="hard"?6:1;
+      const knownMax=difficulty==="easy"?4:difficulty==="medium"?9:difficulty==="hard"?14:14;
+      const total=rand(totalMin,totalMax),maxKnown=Math.min(knownMax,total-1),minKnown=Math.min(knownMin,maxKnown);
+      a=rand(minKnown,maxKnown);b=total-a;const form=difficulty==="easy"?0:difficulty==="hard"?rand(0,2):rand(0,1);
       if(form===0){ans=b;q=`${a} + [ ] = ${total}`}
       else if(form===1){ans=a;q=`[ ] + ${b} = ${total}`}
       else {ans=b;q=`${total} = ${a} + [ ]`}
     }
     else if(type==="missingSubtrahend"){
-      a=numByDifficulty(5,10,9,15,14,20,difficulty);b=rand(1,Math.min(9,a-1));const result=a-b,form=difficulty==="easy"?0:difficulty==="hard"?rand(0,2):rand(0,1);op="−";
+      // Within 20 also permits an unknown subtrahend above 9.  Keep the
+      // existing Easy band unchanged, but let Medium/Hard use the full
+      // subtraction range instead of silently capping the missing value at 9.
+      a=numByDifficulty(5,10,9,15,14,20,difficulty);b=rand(1,a-1);const result=a-b,form=difficulty==="easy"?0:difficulty==="hard"?rand(0,2):rand(0,1);op="−";
       if(form===0){ans=b;q=`${a} − [ ] = ${result}`}
       else if(form===1){ans=a;q=`[ ] − ${b} = ${result}`}
       else {ans=a;q=`${result} = [ ] − ${b}`}
@@ -687,16 +699,15 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     levels.forEach(level=>addCandidates(level,"primary",primaryAttempts));
     const fallbackLevels=adaptiveFallbacks(difficulty);
     const primaryAnswerKeys=new Set(pool.map(p=>problemAnswerKey(p.ans)));
-    // Keep the requested band first, but borrow from the nearest band when
-    // the primary band has a narrow answer range. The borrow budget is small
-    // (about one quarter of the cells), so Puzzle 1 still feels easy while
-    // later cells can gain meaningful answer variety.
-    const borrowAllowance=Math.max(1,Math.ceil(count/4));
-    // Word Problems are matching activities: for a 3×4 page we should aim
-    // for twelve distinct answer keys whenever the Within-20 range allows it.
-    // Other skills retain the smaller borrow budget so their requested band
-    // remains the dominant difficulty.
-    const targetUniqueAnswers=state.skill==="wordProblems20"?Math.min(count,20):Math.min(count,primaryAnswerKeys.size+borrowAllowance);
+    // A matching puzzle is only truly self-checking when each answer points
+    // to one piece.  Therefore the generator now treats the requested band
+    // as the first choice, but borrows from the nearest band whenever the
+    // requested band cannot provide a distinct answer for every cell.  This
+    // is deliberately based on the actual answer capacity, rather than an
+    // arbitrary borrow quota: it fixes duplicate answers whenever the
+    // curriculum range makes that possible and keeps the requested band
+    // dominant when it is already large enough.
+    const targetUniqueAnswers=count;
     const shouldBorrowAnswers=primaryAnswerKeys.size<targetUniqueAnswers&&fallbackLevels.length>0;
     if(pool.length<count||shouldBorrowAnswers){
       for(const level of fallbackLevels){
@@ -707,7 +718,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     }
     const expandedLevels=["easy","medium","hard"].filter(level=>!levels.includes(level)&&!fallbackLevels.includes(level));
     const uniquePoolAnswers=new Set(pool.map(p=>problemAnswerKey(p.ans))).size;
-    if(pool.length<count||(state.skill==="wordProblems20"&&uniquePoolAnswers<targetUniqueAnswers)){
+    if(pool.length<count||uniquePoolAnswers<targetUniqueAnswers){
       for(const level of expandedLevels){
         addCandidates(level,"expanded",Math.max(360,count*80));
         const expandedUniqueAnswers=new Set(pool.map(p=>problemAnswerKey(p.ans))).size;
@@ -750,14 +761,12 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         const differentName=available.filter(p=>p.wordName!==lastWordName);
         if(differentName.length)available=differentName;
       }
-      // Word Problem worksheets are matching activities: use a fresh answer
-      // whenever one is available. If the requested band cannot supply enough
-      // distinct answers, the normal adaptive fallback levels may still be
-      // used; a duplicate is only allowed as a final mathematical fallback.
-      if(state.skill==="wordProblems20"){
-        const freshAnswers=available.filter(p=>!selectedAnswerKeys.has(problemAnswerKey(p.ans)));
-        if(freshAnswers.length)available=freshAnswers;
-      }
+      // Every worksheet is a matching activity. Prefer an unused answer
+      // whenever one exists in the allowed levels, not only for Word
+      // Problems. A duplicate is retained only when the mathematical answer
+      // range has genuinely been exhausted.
+      const freshAnswers=available.filter(p=>!selectedAnswerKeys.has(problemAnswerKey(p.ans)));
+      if(freshAnswers.length)available=freshAnswers;
       const minFreq=Math.min(...available.map(p=>answerFreq.get(problemAnswerKey(p.ans))||0)),least=available.filter(p=>(answerFreq.get(problemAnswerKey(p.ans))||0)===minFreq);
       return least[rand(0,least.length-1)]||null;
     };
@@ -781,12 +790,15 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         }
       }
       const primary=choose([level]);
-      const canStillUseFresh=selected.length<Math.min(count,pool.length);
-      if(!canStillUseFresh||(!shouldBorrowAnswers&&primary))return primary;
       const borrowed=choose(supportLevels);
-      const borrowedIsNew=borrowed&&!selectedAnswerKeys.has(problemAnswerKey(borrowed.ans));
       const primaryIsNew=primary&&!selectedAnswerKeys.has(problemAnswerKey(primary.ans));
-      return borrowedIsNew&&!primaryIsNew?borrowed:(primary||borrowed);
+      const borrowedIsNew=borrowed&&!selectedAnswerKeys.has(problemAnswerKey(borrowed.ans));
+      // Keep the requested level whenever it still offers a fresh answer.
+      // Otherwise use a fresh nearby-level answer before accepting a
+      // duplicate from the primary level.
+      if(primaryIsNew)return primary;
+      if(borrowedIsNew)return borrowed;
+      return primary||borrowed;
     };
     levels.forEach(level=>{
       let need=quotas.get(level)||0;
@@ -805,6 +817,16 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       const available=pool.length;
       noteGenerationWarning(`${(skillMeta[state.skill]||{}).label||state.skill} มีโจทย์ไม่ซ้ำ ${available} แบบ แต่ตารางต้องการ ${count} ช่อง จึงต้องใช้โจทย์ซ้ำ ${count-available} ช่อง แนะนำตาราง 3×3`);
       while(selected.length<count){const p=choose([...new Set([...levels,...supportLevels])],true)||pool[0];addSelected(p)}
+    }
+    const duplicateAnswers=[...answerFreq.entries()].filter(([,frequency])=>frequency>1).map(([answer])=>answer);
+    if(duplicateAnswers.length){
+      const label=(skillMeta[state.skill]||{}).label||state.skill;
+      // Report the capacity of the final candidate pool, including any
+      // adaptive/expanded bands that were actually added for this worksheet.
+      // The old message used the primary band only, which was misleading for
+      // Missing Addends Within 20 after the generator borrowed a wider band.
+      const answerCapacity=new Set(pool.map(p=>problemAnswerKey(p.ans))).size;
+      noteGenerationWarning(`${label} มีคำตอบซ้ำ ${duplicateAnswers.length} ค่า (${duplicateAnswers.join(", ")}) เพราะชุดโจทย์นี้มีคำตอบที่แตกต่างกันได้สูงสุด ${answerCapacity} ค่า แต่ตารางต้องการ ${count} ช่อง แนะนำใช้ 3×3 หรือเพิ่มช่วงจำนวน`);
     }
     return selected;
   }
@@ -1035,10 +1057,12 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     validate();
   }
   function validate(){
-    let errors=0;const items=activeItems();
-    (Array.isArray(items)?items:[]).forEach(x=>{const value=evaluate(x.q);if(!answerMatches(x.ans,value))errors++});
-    const s=$("#validStatus");if(s){s.textContent=errors?`พบ ${errors} จุด`:"ถูกต้องทั้งหมด";s.style.background=errors?"#fff0ed":"";s.style.color=errors?"#b42318":""}
-    const note=$("#qualityNote");if(note)note.textContent=errors?"⚠ แก้โจทย์หรือคำตอบที่ไม่ตรงกันก่อนส่งออก":"✓ ระบบตรวจคำตอบและป้องกันโจทย์ซ้ำอัตโนมัติ";
+    let errors=0;const items=activeItems(),answerCounts=new Map();
+    (Array.isArray(items)?items:[]).forEach(x=>{const value=evaluate(x.q);if(!answerMatches(x.ans,value))errors++;const key=problemAnswerKey(x.ans);answerCounts.set(key,(answerCounts.get(key)||0)+1)});
+    const duplicateKeys=[...answerCounts.entries()].filter(([,n])=>n>1).map(([key])=>key),duplicateCount=duplicateKeys.length;
+    const duplicateLabel=duplicateKeys.length?` (${duplicateKeys.join(", ")})`:"";
+    const s=$("#validStatus");if(s){s.textContent=errors?`พบ ${errors} จุด`:duplicateCount?`ถูกต้อง แต่มีคำตอบซ้ำ ${duplicateCount} ค่า${duplicateLabel}`:"ถูกต้องทั้งหมด";s.style.background=errors?"#fff0ed":duplicateCount?"#fff8e6":"";s.style.color=errors?"#b42318":duplicateCount?"#9a6700":""}
+    const note=$("#qualityNote");if(note)note.textContent=errors?"⚠ แก้โจทย์หรือคำตอบที่ไม่ตรงกันก่อนส่งออก":duplicateCount?`⚠ คำนวณถูกต้อง แต่คำตอบ ${duplicateKeys.join(", ")} ซ้ำ จึงอาจจับคู่ชิ้นส่วนได้หลายแบบ`:"✓ ระบบตรวจคำตอบและป้องกันโจทย์ซ้ำอัตโนมัติ";
     return errors===0;
   }
   function pageClass(){return `page ${state.pageSize==="a4"?"a4":""} ${state.orientation==="landscape"?"landscape":""}`}
