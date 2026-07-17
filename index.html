@@ -1466,7 +1466,183 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       }
     }));
   }
+  async function exportCanvasImage(src){
+    if(!src)return null;
+    // Uploaded artwork normally uses a blob: URL. Convert it to a data URL
+    // before drawing so the canvas remains origin-clean in Chromium/WebView.
+    // This prevents the full-page PNG export from failing only when a puzzle
+    // contains an uploaded illustration.
+    let safeSrc=src;
+    if(!/^data:/i.test(src)){
+      try{
+        const response=await fetch(src);
+        if(response.ok){
+          const blob=await response.blob();
+          safeSrc=await new Promise((resolve,reject)=>{
+            const reader=new FileReader();
+            reader.onload=()=>resolve(String(reader.result));
+            reader.onerror=reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+      }catch(error){
+        // Keep the original URL as a fallback for same-origin assets. The
+        // direct image path still supports ordinary images when fetch is not
+        // available in the current browser context.
+        console.warn("Could not inline canvas image",src,error);
+      }
+    }
+    return new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>resolve(img);
+      img.onerror=()=>reject(new Error("ไม่สามารถโหลดภาพประกอบสำหรับ PNG"));
+      img.src=safeSrc;
+    });
+  }
+  async function renderDomCanvasFallback(node,scale=3){
+    // Last-resort renderer for browsers that cannot rasterize SVG
+    // foreignObject. It paints the actual Live View DOM (including clipped
+    // puzzle images, grid borders, text and answer outlines) directly onto a
+    // canvas, so a full-page PNG is still produced instead of stopping.
+    const pageRect=node.getBoundingClientRect(),w=Math.max(1,Math.round(node.offsetWidth||pageRect.width)),h=Math.max(1,Math.round(node.offsetHeight||pageRect.height));
+    // The preview can be zoomed with a CSS transform.  Convert screen-space
+    // rectangles back to the page's logical pixel space before drawing,
+    // otherwise exported PNGs become too small/offset when zoom is not 100%.
+    const domScaleX=pageRect.width/w||1,domScaleY=pageRect.height/h||1;
+    const canvas=document.createElement("canvas");canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
+    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("PNG canvas is unavailable");ctx.scale(scale,scale);ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);
+    const imageCache=new Map();
+    const getImage=async src=>{if(!src)return null;if(!imageCache.has(src))imageCache.set(src,exportCanvasImage(src).catch(()=>null));return imageCache.get(src)};
+    const getElementImage=async el=>{
+      const src=el.currentSrc||el.src||el.getAttribute("data-src")||"";
+      if(el.complete&&el.naturalWidth>0)return el;
+      // Give an image that is still decoding in Live View a short chance to
+      // finish before creating a second Image object. This is especially
+      // useful immediately after a user drops a new puzzle image.
+      if(typeof el.addEventListener==="function"){
+        await new Promise(resolve=>{
+          let done=false;
+          const finish=()=>{if(done)return;done=true;resolve()};
+          el.addEventListener("load",finish,{once:true});
+          el.addEventListener("error",finish,{once:true});
+          setTimeout(finish,1500);
+        });
+      }
+      if(el.complete&&el.naturalWidth>0)return el;
+      return getImage(src);
+    };
+    const rectOf=el=>{const r=el.getBoundingClientRect();return {x:(r.left-pageRect.left)/domScaleX,y:(r.top-pageRect.top)/domScaleY,w:r.width/domScaleX,h:r.height/domScaleY}};
+    const colorAlpha=c=>{if(!c||c==="transparent")return 0;const m=c.match(/rgba?\(([^)]+)\)/i);if(!m)return 1;const parts=m[1].split(",").map(x=>x.trim());return parts.length>3?parseFloat(parts[3])||0:1};
+    const drawLine=(x1,y1,x2,y2,cs,width,style)=>{ctx.save();ctx.strokeStyle=cs||"#111";ctx.lineWidth=Math.max(.5,width||1);if(style==="dashed")ctx.setLineDash([6,4]);else if(style==="dotted")ctx.setLineDash([1,4]);else if(style==="double")ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.restore()};
+    const drawTextNode=(tn,parent)=>{
+      const text=tn.textContent||"";if(!text.trim())return;const cs=getComputedStyle(parent),fontSize=parseFloat(cs.fontSize)||12;
+      ctx.save();ctx.font=`${cs.fontStyle||"normal"} ${cs.fontWeight||400} ${fontSize}px ${cs.fontFamily||"sans-serif"}`;ctx.fillStyle=cs.color||"#111827";ctx.textBaseline="alphabetic";
+      let start=0;
+      while(start<text.length){
+        try{
+          let end=start+1,last=null;
+          while(end<=text.length){
+            const range=document.createRange();range.setStart(tn,start);range.setEnd(tn,end);const rs=[...range.getClientRects()];if(!rs.length)break;const r=rs[rs.length-1];
+            if(last&&Math.abs(r.top-last.top)>1)break;last=r;end++;
+          }
+          end=Math.max(start+1,end-1);const range=document.createRange();range.setStart(tn,start);range.setEnd(tn,end);const r=range.getBoundingClientRect();
+          let x=(r.left-pageRect.left)/domScaleX,y=(r.bottom-pageRect.top)/domScaleY;
+          const logicalWidth=r.width/domScaleX;
+          if(cs.textAlign==="center")x+=(logicalWidth-ctx.measureText(text.slice(start,end)).width)/2;else if(cs.textAlign==="right")x+=logicalWidth-ctx.measureText(text.slice(start,end)).width;
+          const value=text.slice(start,end),stroke=parseFloat(cs.webkitTextStrokeWidth||"0")||((parent.classList?.contains("answer")||parent.classList?.contains("answer-red"))?4.8:0);
+          if(stroke){ctx.lineJoin="round";ctx.lineWidth=stroke*2;ctx.strokeStyle="#fff";ctx.strokeText(value,x,y)}ctx.fillStyle=cs.color||"#111827";ctx.fillText(value,x,y);start=end;
+        }catch(error){
+          // A detached/zero-size text node should never abort an entire PNG.
+          // Skip that node and continue rendering the rest of the page.
+          console.warn("Skipping text node during PNG export",error);break;
+        }
+      }
+      ctx.restore();
+    };
+    const drawCssBackground=async(el,box,cs)=>{
+      // Uploaded artwork can be represented as a CSS background by older
+      // saved projects.  Treat it like the page-background <img> so PNG
+      // export does not lose the illustration or fall back to the fragile
+      // foreignObject renderer.
+      const bg=String(cs.backgroundImage||"");
+      const match=bg.match(/url\(["']?([^"')]+)["']?\)/i);
+      if(!match)return;
+      const img=await getImage(match[1]);
+      if(!img)return;
+      const size=String(cs.backgroundSize||"cover").trim();
+      let dw=box.w,dh=box.h;
+      if(size.endsWith("%")){
+        const n=parseFloat(size);if(Number.isFinite(n)){dw=box.w*n/100;dh=box.h*n/100}
+      }else if(size!="cover"&&size!="contain"&&size!="auto"){
+        const parts=size.split(/\s+/).map(v=>parseFloat(v));
+        if(Number.isFinite(parts[0]))dw=parts[0];
+        if(Number.isFinite(parts[1]))dh=parts[1];else dh=dw*(img.naturalHeight/img.naturalWidth||1);
+      }
+      const ratio=Math.max(box.w/dw,box.h/dh);
+      if(size==="cover"){dw*=ratio;dh*=ratio}
+      else if(size==="contain"){const fit=Math.min(box.w/dw,box.h/dh);dw*=fit;dh*=fit}
+      const pos=String(cs.backgroundPosition||"center center").split(/\s+/);
+      const px=pos[0]==="left"?0:pos[0]==="right"?box.w-dw:(box.w-dw)/2;
+      const py=pos[1]==="top"?0:pos[1]==="bottom"?box.h-dh:(box.h-dh)/2;
+      ctx.save();ctx.globalAlpha=colorAlpha(cs.backgroundColor)>0?1:1;ctx.beginPath();ctx.rect(box.x,box.y,box.w,box.h);ctx.clip();ctx.drawImage(img,box.x+px,box.y+py,dw,dh);ctx.restore();
+    };
+    const drawElement=async el=>{try{
+      if(el.nodeType!==1)return;const box=rectOf(el),cs=getComputedStyle(el);if(box.w<=0||box.h<=0)return;
+      if(el.tagName==="IMG"){
+        // Prefer the already-loaded element from Live View.  This is
+        // important for uploaded blob: images: Chromium may allow the page
+        // to display the blob URL while a second Image/fetch request is
+        // still pending (or blocked), which used to make PNG export fail.
+        const img=await getElementImage(el);
+        if(img){ctx.save();ctx.drawImage(img,box.x,box.y,box.w,box.h);ctx.restore()}
+        return;
+      }
+      const bg=cs.backgroundColor;if(colorAlpha(bg)>0){ctx.save();ctx.fillStyle=bg;ctx.fillRect(box.x,box.y,box.w,box.h);ctx.restore()}
+      await drawCssBackground(el,box,cs);
+      const isGrid=el.classList.contains("puzzle-grid"),isCell=el.classList.contains("cell");
+      if(isGrid||isCell){const bw=parseFloat(cs.borderWidth)||1;drawLine(box.x,box.y,box.x+box.w,box.y,cs.borderTopColor,bw,cs.borderTopStyle);drawLine(box.x,box.y,box.x,box.y+box.h,cs.borderLeftColor,bw,cs.borderLeftStyle);drawLine(box.x+box.w,box.y,box.x+box.w,box.y+box.h,cs.borderRightColor,bw,cs.borderRightStyle);drawLine(box.x,box.y+box.h,box.x+box.w,box.y+box.h,cs.borderBottomColor,bw,cs.borderBottomStyle)}
+      const pseudo=isCell?getComputedStyle(el,"::after"):null;if(pseudo&&pseudo.content!=="none"){const bw=parseFloat(pseudo.borderRightWidth)||0,bh=parseFloat(pseudo.borderBottomWidth)||0;if(bw)drawLine(box.x+box.w,box.y,box.x+box.w,box.y+box.h,pseudo.borderRightColor,bw,pseudo.borderRightStyle);if(bh)drawLine(box.x,box.y+box.h,box.x+box.w,box.y+box.h,pseudo.borderBottomColor,bh,pseudo.borderBottomStyle)}
+      const clip=cs.overflow==="hidden"||isCell||el.classList.contains("piece");if(clip){ctx.save();ctx.beginPath();ctx.rect(box.x,box.y,box.w,box.h);ctx.clip()}
+      for(const child of el.childNodes){if(child.nodeType===3)drawTextNode(child,el);else await drawElement(child)}
+      if(clip)ctx.restore();
+      }catch(error){
+        // One unsupported CSS/SVG node must not cancel the whole export.
+        console.warn("Skipping element during PNG export",error);
+      }
+    };
+    await drawElement(node);
+    // Some Chromium/WebView builds return null from toBlob for a canvas that
+    // contains blob-backed images.  Fall back to a data URL so the export
+    // button never reports a false "cannot draw page" error after the canvas
+    // has already been rendered successfully.
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const finish=blob=>{if(settled)return;settled=true;blob?resolve(blob):reject(new Error("PNG canvas export failed"))};
+      try{canvas.toBlob(finish,"image/png",1)}catch{}
+      if(settled)return;
+      try{
+        const data=canvas.toDataURL("image/png");
+        const comma=data.indexOf(",");
+        if(comma>0){const raw=atob(data.slice(comma+1)),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);finish(new Blob([bytes],{type:"image/png"}))}
+      }catch{}
+    });
+  }
   async function renderNodeToPng(node,scale=3){
+    // Prefer the direct DOM-to-canvas renderer.  Chromium can load the
+    // foreignObject SVG preview in the Live View but still refuse to rasterize
+    // it when a page contains uploaded/blob images.  Using the same DOM
+    // geometry first makes full-page PNG export reliable for those pages.
+    try{
+      return await renderDomCanvasFallback(node,scale);
+    }catch(canvasError){
+      // A very large bundle or a browser canvas memory limit can reject a
+      // 3x raster.  Retry at 1x before using SVG; this keeps full-page PNG
+      // export working while preserving the exact Live View geometry.
+      console.warn("Direct canvas PNG renderer failed at requested scale; retrying at 1x",canvasError);
+      try{return await renderDomCanvasFallback(node,1)}catch(retryError){
+        console.warn("Direct canvas PNG renderer failed at 1x; trying SVG renderer",retryError);
+      }
+    }
     const w=Math.max(1,node.offsetWidth),h=Math.max(1,node.offsetHeight),clone=node.cloneNode(true);
     clone.setAttribute("xmlns","http://www.w3.org/1999/xhtml");clone.style.boxShadow="none";clone.style.margin="0";
     clone.style.width=w+"px";clone.style.height=h+"px";clone.style.position="relative";clone.style.overflow="hidden";
@@ -1493,7 +1669,14 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       try{
         const base64=btoa(unescape(encodeURIComponent(svg)));
         return await rasterizeSvg("data:image/svg+xml;base64,"+base64);
-      }catch{throw firstError}
+      }catch(secondError){
+        console.warn("SVG PNG export failed; using direct canvas renderer",firstError,secondError);
+        try{return await renderDomCanvasFallback(node,scale)}catch{
+          // Final safety net for canvas-size limits: a 1x PNG is preferable
+          // to stopping the entire export with an image-rendering error.
+          return renderDomCanvasFallback(node,1);
+        }
+      }
     }
   }
   const renderPageToPng=(page,scale=3)=>renderNodeToPng(page,scale);
@@ -1556,8 +1739,10 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("Canvas piece export failed")),"image/png",1);
       };
       if(!imgEl){finish();return}
-      const img=new Image();
-      img.onload=()=>{
+      // Normalise blob/data URLs just like full-page export. Saved projects
+      // can otherwise display an uploaded image in Live View but fail when a
+      // second Image object is created for an Easel piece.
+      exportCanvasImage(imgEl.currentSrc||imgEl.src||imgEl.getAttribute("data-src")||"").then(img=>{
         try{
           const left=parseFloat(imgEl.style.left)||0,top=parseFloat(imgEl.style.top)||0;
           const col=Math.max(0,Math.round(Math.abs(left)/100)),row=Math.max(0,Math.round(Math.abs(top)/100));
@@ -1565,9 +1750,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
           ctx.drawImage(img,col*sw,row*sh,sw,sh,0,0,w,h);
           finish();
         }catch(e){reject(e)}
-      };
-      img.onerror=()=>reject(new Error("ไม่สามารถโหลดภาพชิ้นส่วนได้"));
-      img.src=imgEl.src;
+      }).catch(()=>reject(new Error("ไม่สามารถโหลดภาพชิ้นส่วนได้")));
     });
   }
   function exportBundleIndices(){
