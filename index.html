@@ -305,6 +305,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
           <p class="hint">Adjust the width and height of combined worksheet + puzzle pages only. The generated document uses English text.</p>
           <div class="field"><label for="comboWidth">Combined page width</label><div class="range-control"><input id="comboWidth" type="range" min="60" max="100" step="1" data-unit="percent"><span class="range-value" data-value-for="comboWidth"></span></div></div>
           <div class="field"><label for="comboHeight">Combined page height</label><div class="range-control"><input id="comboHeight" type="range" min="360" max="1400" step="10" data-unit="px"><span class="range-value" data-value-for="comboHeight"></span></div></div>
+      <div class="field"><label for="comboGrid">Combined grid</label><select id="comboGrid"><option value="3x4">3 × 4 (12 pieces)</option><option value="3x3">3 × 3 (9 pieces)</option><option value="4x3">4 × 3 (12 pieces)</option><option value="6x2">6 × 2 (12 pieces)</option><option value="5x3">5 × 3 (15 pieces)</option></select></div>
+      <p class="hint">This grid is independent from the main worksheet grid. The worksheet keeps its own setting. If the selected layout has fewer cells than the current puzzle, the combined page extends with the required extra rows so no piece is lost.</p>
           <div class="field"><label for="comboLayout">Combined layout</label><select id="comboLayout"><option value="side">Left and right</option><option value="stack">Top and bottom</option></select></div>
         </div>
         <div class="section">
@@ -329,6 +331,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
             <button class="export-preset" type="button" data-export-preset="comboBw">🧩 รวมใบงาน + Puzzle (BW)</button>
             <button class="export-preset" type="button" data-export-preset="comboColor">🧩 รวมใบงาน + Puzzle (Color)</button>
             <button class="export-preset" type="button" data-export-preset="comboAnswer">✅ รวมเฉลยภาพ (B&amp;W + สี)</button>
+            <button class="export-preset" type="button" data-export-preset="comboAll">🧩 รวม BW + Color + เฉลย</button>
             <button class="export-preset" type="button" data-export-preset="custom">⚙️ ระบุเลขหน้า (Custom Pages)</button>
           </div>
           <div class="custom-pages" id="customPages">
@@ -403,7 +406,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     footerText:"After gluing all pieces:\n□ My favorite puzzle piece was #____ because ____________________\n□ The hardest problem for me was #____",footerFont:"Comic Neue",footerSize:11,footerWeight:"400",footerStyle:"normal",
     standard:"1.OA.C.6",standardOverride:false,showName:true,showStandard:true,showBundleNumber:true,skill:"add10",wordTheme:"classroom",eqLayout:"auto",accent:"#7656d8",
     titleFont:"Mali",bodyFont:"Mali",titleWeight:"700",nameDateWeight:"400",subtitleWeight:"700",directionWeight:"400",standardWeight:"700",mathWeight:"400",pieceWeight:"400",answerKeyTitleWeight:"700",answerKeySubtitleWeight:"400",quickAnswerWeight:"400",titleTransform:"uppercase",titleSize:25,nameDateSize:14,subtitleSize:13.5,directionSize:9.5,standardSize:9,mathSize:32,factFamilySize:24,wordProblemSize:24,pieceSize:28,answerKeyTitleSize:18.5,answerKeySubtitleSize:9.5,quickAnswerSize:15,
-    showNumbers:true,pieceNumV:"top",pieceNumH:"right",showAnswers:true,showAnswerBlank:false,dashed:true,borderStyle:"dashed",strokeWeight:2,answerDisplayVersion:2,lowInkVersion:2,colorImage:null,bwImage:null,bwAutoImage:null,bgImage:null,bgApply:"all",bgOpacity:25,comboLayout:"side",comboWidth:100,comboHeight:680,projectFolderName:"",fileBaseName:"",view:"problem",exportPreset:"all",exportMode:"pdf",pngScale:3,exportPngFullPage:true,exportPngCutPieces:false,exportRecoveryFile:true,bundleDifficultyMode:"progressive",bundleExportScope:"all",bundleExportStart:1,bundleExportEnd:10,bundleEnabled:false,bundleCount:10,bundleIndex:0,bundlePuzzles:[],pieceOrder:[],printPages:{problem:true,bw:true,color:true,bwkey:true,colorkey:true,eqkey:true,comboBw:false,comboColor:false,comboAnswer:false},items:[]
+    showNumbers:true,pieceNumV:"top",pieceNumH:"right",showAnswers:true,showAnswerBlank:false,dashed:true,borderStyle:"dashed",strokeWeight:2,answerDisplayVersion:2,lowInkVersion:2,colorImage:null,bwImage:null,bwAutoImage:null,bgImage:null,bgApply:"all",bgOpacity:25,comboLayout:"side",comboGrid:"3x4",comboWidth:100,comboHeight:680,projectFolderName:"",fileBaseName:"",view:"problem",exportPreset:"all",exportMode:"pdf",pngScale:3,exportPngFullPage:true,exportPngCutPieces:false,exportRecoveryFile:true,bundleDifficultyMode:"progressive",bundleExportScope:"all",bundleExportStart:1,bundleExportEnd:10,bundleEnabled:false,bundleCount:10,bundleIndex:0,bundlePuzzles:[],pieceOrder:[],printPages:{problem:true,bw:true,color:true,bwkey:true,colorkey:true,eqkey:true,comboBw:false,comboColor:false,comboAnswer:false},items:[]
   };
   let state=structuredClone(defaults);
   let projectFolderHandle=null;
@@ -443,7 +446,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     if(!modal)return;
     modal.classList.remove("show");modal.setAttribute("aria-hidden","true");
   }
-  const decorationKeys=["pageSize","orientation","gridHeight","comboLayout","comboWidth","comboHeight","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","footerFont","footerSize","footerWeight","footerStyle","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","showName","showStandard","showBundleNumber","showNumbers","showAnswers","showAnswerBlank","borderStyle","strokeWeight","dashed","pieceNumV","pieceNumH","bgApply","bgOpacity","footerText","copyright"];
+  const decorationKeys=["pageSize","orientation","gridHeight","comboLayout","comboGrid","comboWidth","comboHeight","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","footerFont","footerSize","footerWeight","footerStyle","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","showName","showStandard","showBundleNumber","showNumbers","showAnswers","showAnswerBlank","borderStyle","strokeWeight","dashed","pieceNumV","pieceNumH","bgApply","bgOpacity","footerText","copyright"];
   const isDecorationKey=k=>decorationKeys.includes(k);
   function decorationSnapshot(){const out={};decorationKeys.forEach(k=>out[k]=state[k]);out.savedAt=new Date().toISOString();return out}
   function saveDecorationDefaults(){try{localStorage.setItem("mathMysteryDecorationDefaultsV2",JSON.stringify(decorationSnapshot()));toast("บันทึกค่าตกแต่งเป็นค่าเริ่มต้นแล้ว")}catch{toast("ไม่สามารถบันทึกค่าตกแต่งได้")}}
@@ -470,7 +473,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     missingNumbers20:{series:"Series B: Strategy Skills",label:"MISSING NUMBERS WITHIN 20",ccss:"1.OA.D.8, 1.OA.B.4",note:"Find the missing number in addition and subtraction equations within 20."},
     missingAddend:{series:"Series B: Strategy Skills",label:"MISSING ADDENDS WITHIN 20",ccss:"1.OA.D.8",note:"Find the unknown addend in any position of an addition equation within 20."},
     missingSubtrahend:{series:"Series B: Strategy Skills",label:"MISSING SUBTRACTION NUMBERS WITHIN 20",ccss:"1.OA.D.8, 1.OA.B.4",note:"Find the unknown minuend or subtrahend in any position within 20."},
-    factFamilies:{series:"Series B: Strategy Skills",label:"FACT FAMILIES WITHIN 20",ccss:"1.OA.B.4, 1.OA.C.6",note:"Complete fact families within 20 by connecting addition and subtraction facts; computation supports fluency within 20."},
+    factFamilies:{series:"Series B: Strategy Skills",label:"FACT FAMILIES WITHIN 20",ccss:"1.OA.B.4, 1.OA.C.6",note:"Use related addition and subtraction facts to complete the missing fact within 20; this builds fact-family fluency."},
     wordProblems20:{series:"Series B: Strategy Skills",label:"WORD PROBLEMS WITHIN 20",ccss:"1.OA.A.1",note:"Solve add-to, take-from, put-together, and compare word problems within 20; computation also supports 1.OA.C.6."},
     tensOnes:{series:"Series C: Number Sense",label:"TENS AND ONES",ccss:"1.NBT.B.2",note:"Understand two-digit numbers as tens and ones."},
     beforeAfter:{series:"Series C: Number Sense",label:"NUMBER BEFORE AND AFTER",ccss:"1.NBT.A.1",note:"Extend and use the counting sequence to 120."},
@@ -582,10 +585,10 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       a=rand(minA,maxA);b=total-a;
       if(maxA-minA>0&&a===b){a=a===maxA? a-1:a+1;b=total-a;}
       const form=rand(0,3);familyKey=[a,b,total].sort((x,y)=>x-y).join(":");
-      if(form===0){ans=total;q=`Fact family\n${total} − ${a} = ${b}\n${a} + ${b} = [ ]`}
-      else if(form===1){ans=total;q=`Fact family\n${total} − ${b} = ${a}\n${b} + ${a} = [ ]`}
-      else if(form===2){ans=b;op="−";q=`Fact family\n${a} + ${b} = ${total}\n${total} − ${a} = [ ]`}
-      else{ans=a;op="−";q=`Fact family\n${b} + ${a} = ${total}\n${total} − ${b} = [ ]`}
+      if(form===0){ans=total;q=`Related facts\n${total} − ${a} = ${b}\n${a} + ${b} = [ ]`}
+      else if(form===1){ans=total;q=`Related facts\n${total} − ${b} = ${a}\n${b} + ${a} = [ ]`}
+      else if(form===2){ans=b;op="−";q=`Related facts\n${a} + ${b} = ${total}\n${total} − ${a} = [ ]`}
+      else{ans=a;op="−";q=`Related facts\n${b} + ${a} = ${total}\n${total} − ${b} = [ ]`}
     }
     else if(type==="wordProblems20"){
       // Word Problems Within 20 uses four intentional Grade 1 structures.
@@ -1012,7 +1015,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     return a.toLowerCase()===String(expected).trim().toLowerCase();
   }
   function syncControls(){
-    ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerSize","footerWeight","footerStyle","skill","wordTheme","eqLayout","comboLayout","comboWidth","comboHeight","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","gridHeight","strokeWeight","bgApply","bgOpacity","exportMode","pngScale","bundleDifficultyMode","bundleExportScope","bundleExportStart","bundleExportEnd"].forEach(k=>{const el=$("#"+k);if(el)el.value=el.dataset.unit==="rem"?remValue(state[k]):state[k]});
+    ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerSize","footerWeight","footerStyle","skill","wordTheme","eqLayout","comboLayout","comboGrid","comboWidth","comboHeight","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","gridHeight","strokeWeight","bgApply","bgOpacity","exportMode","pngScale","bundleDifficultyMode","bundleExportScope","bundleExportStart","bundleExportEnd"].forEach(k=>{const el=$("#"+k);if(el)el.value=el.dataset.unit==="rem"?remValue(state[k]):state[k]});
     if($("#fileBaseName"))$("#fileBaseName").value=state.fileBaseName||autoFileBaseName();
     updateExportFilePreview();
     const cols=$("#cols"),rows=$("#rows");if(cols)cols.value=state.cols;if(rows)rows.value=state.rows;
@@ -1079,50 +1082,51 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     const bundleMark=!compact&&state.bundleEnabled&&state.showBundleNumber?`<div class="bundle-mark" style="font-size:${state.standardSize}px;font-weight:${state.standardWeight}"><strong>Puzzle</strong> #${(+bundleIndex||0)+1} / ${state.bundleCount}</div>`:"";
     const standardMark=!compact&&state.showStandard?`<div class="standard" style="font-size:${state.standardSize}px;font-weight:${state.standardWeight}"><strong>CCSS:</strong> ${escapeHtml(standardText)}</div>`:"";
     const metaRow=bundleMark||standardMark?`<div class="meta-row ${!bundleMark&&standardMark?"only-standard":""}">${bundleMark}<span></span>${standardMark}</div>`:"";
-    const details=!compact?`<p class="directions" style="font-size:${state.directionSize}px;font-weight:${state.directionWeight}"><strong>Directions:</strong> ${escapeHtml(directionText)}</p>${metaRow}`:"";
+    const factFamilyInstruction=!compact&&state.skill==="factFamilies"?`<p class="skill-note" style="font-size:${Math.max(9,Math.round(state.directionSize*.9))}px;font-weight:400;margin:.18em 0 .35em">Use the related fact shown to complete the missing fact.</p>`:"";
+    const details=!compact?`<p class="directions" style="font-size:${state.directionSize}px;font-weight:${state.directionWeight}"><strong>Directions:</strong> ${escapeHtml(directionText)}</p>${factFamilyInstruction}${metaRow}`:"";
     return compact?heading:`<div class="worksheet-header">${nameDate}${heading}${details}</div>`;
   }
   function borderCssStyle(){return state.borderStyle==="longdash"?"dashed":state.borderStyle}
-  function gridStyle(forceSolid=false){
+  function gridStyle(forceSolid=false,cols=state.cols,rows=state.rows,height=state.gridHeight){
     const style=forceSolid?"solid":borderCssStyle(),weight=forceSolid?2:(state.borderStyle==="none"?0:clamp(+state.strokeWeight||0,0,6));
-    return `grid-template-columns:repeat(${state.cols},1fr);grid-template-rows:repeat(${state.rows},1fr);height:${state.gridHeight}px;--grid-border-width:${weight}px;--grid-border-style:${style}`
+    return `grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);height:${height}px;--grid-border-width:${weight}px;--grid-border-style:${style}`
   }
-  function cellBorderStyle(pos,forceSolid=false){
+  function cellBorderStyle(pos,forceSolid=false,cols=state.cols,rows=state.rows){
     const style=forceSolid?"solid":borderCssStyle(),weight=forceSolid?2:(state.borderStyle==="none"?0:clamp(+state.strokeWeight||0,0,6));
     if(!weight)return "";
-    const col=pos%state.cols,row=Math.floor(pos/state.cols),line=`${weight}px ${style} #111`,rules=[];
-    if(col<state.cols-1)rules.push(`--cell-border-right:${line}`);
-    if(row<state.rows-1)rules.push(`--cell-border-bottom:${line}`);
+    const col=pos%cols,row=Math.floor(pos/cols),line=`${weight}px ${style} #111`,rules=[];
+    if(col<cols-1)rules.push(`--cell-border-right:${line}`);
+    if(row<rows-1)rules.push(`--cell-border-bottom:${line}`);
     return rules.join(";");
   }
   function formatQuestionHtml(q,answer=null){
     const replacement=answer===null?`<span class="inline-answer-blank">[<span class="inline-answer-space"></span>]</span>`:`<span class="inline-answer-blank solved-inline">[<span class="inline-answer-value">${escapeHtml(answer)}</span>]</span>`;
     return escapeHtml(q).replace(/□|\[\s*\]/g,replacement).replace(/\n/g,"<br>");
   }
-  function problemCell(x,pos=0,forceSolid=false){
+  function problemCell(x,pos=0,forceSolid=false,cols=state.cols,rows=state.rows){
     const isBasic=/^\d+\s*[+−-]\s*\d+$/.test(String(x.q));
     const vertical=isBasic&&(state.eqLayout==="vertical"||(state.eqLayout==="auto"&&(Math.abs(x.a)>9||Math.abs(x.b)>9)));
     const wordLike=/\n/.test(String(x.q));
-    const factFamilyLike=/^Fact family\b/i.test(String(x.q))||state.skill==="factFamilies";
+    const factFamilyLike=/^(Fact family|Related facts)\b/i.test(String(x.q))||state.skill==="factFamilies";
     const wordProblemLike=state.skill==="wordProblems20";
     const displaySize=factFamilyLike?state.factFamilySize:wordProblemLike?state.wordProblemSize:wordLike?Math.max(12,Math.round(state.mathSize*.42)):state.mathSize;
     const showExtraBlank=state.showAnswerBlank&&isBasic;
     const blank=`<span class="answer-blank"><span class="equals">=</span><span class="bracket">[<i class="blank-space"></i>]</span></span>`;
     const problem=vertical?`<div class="vertical"><span></span><span>${x.a}</span><span class="op">${x.op}</span><span class="n2">${x.b}</span><i class="rule"></i></div>`:`<b class="equation-text">${formatQuestionHtml(x.q)}</b>`;
-    return `<div class="cell math-cell ${showExtraBlank?"has-answer-blank":""}" style="${cellBorderStyle(pos,forceSolid)}"><small>${x.id}</small><div class="math-object ${vertical?"vertical-object":""} ${wordLike?"word-object":""} ${showExtraBlank?"has-blank":""}" style="font-size:${displaySize}px;font-weight:${state.mathWeight}">${problem}${showExtraBlank?blank:""}</div></div>`;
+    return `<div class="cell math-cell ${showExtraBlank?"has-answer-blank":""}" style="${cellBorderStyle(pos,forceSolid,cols,rows)}"><small>${x.id}</small><div class="math-object ${vertical?"vertical-object":""} ${wordLike?"word-object":""} ${showExtraBlank?"has-blank":""}" style="font-size:${displaySize}px;font-weight:${state.mathWeight}">${problem}${showExtraBlank?blank:""}</div></div>`;
   }
-  function equationKeyCell(x,pos=0,forceSolid=false){
+  function equationKeyCell(x,pos=0,forceSolid=false,cols=state.cols,rows=state.rows){
     const isBasic=/^\d+\s*[+−-]\s*\d+$/.test(String(x.q));
     const hasInlineBlank=/□|\[\s*\]/.test(String(x.q));
     const vertical=isBasic&&(state.eqLayout==="vertical"||(state.eqLayout==="auto"&&(Math.abs(x.a)>9||Math.abs(x.b)>9)));
     const wordLike=/\n/.test(String(x.q));
-    const factFamilyLike=/^Fact family\b/i.test(String(x.q))||state.skill==="factFamilies";
+    const factFamilyLike=/^(Fact family|Related facts)\b/i.test(String(x.q))||state.skill==="factFamilies";
     const wordProblemLike=state.skill==="wordProblems20";
     const displaySize=factFamilyLike?state.factFamilySize:wordProblemLike?state.wordProblemSize:wordLike?Math.max(12,Math.round(state.mathSize*.42)):state.mathSize;
     const showExtraBlank=state.showAnswerBlank&&isBasic;
     const blank=showExtraBlank?`<span class="answer-blank solved"><span class="equals">=</span><span class="bracket">[<span class="blank-space answer-value">${escapeHtml(x.ans)}</span>]</span></span>`:`<span class="answer-red">= ${escapeHtml(x.ans)}</span>`;
     const problem=vertical?`<div class="vertical"><span></span><span>${x.a}</span><span class="op">${x.op}</span><span class="n2">${x.b}</span><i class="rule"></i></div>`:`<b class="equation-text">${formatQuestionHtml(x.q,hasInlineBlank?x.ans:null)}</b>`;
-    return `<div class="cell math-cell ${showExtraBlank?"has-answer-blank":""}" style="${cellBorderStyle(pos,forceSolid)}"><small>${x.id}</small><div class="math-object ${vertical?"vertical-object":""} ${wordLike?"word-object":""} ${showExtraBlank?"has-blank":""}" style="font-size:${displaySize}px;font-weight:${state.mathWeight}">${problem}${hasInlineBlank?"":blank}</div></div>`;
+    return `<div class="cell math-cell ${showExtraBlank?"has-answer-blank":""}" style="${cellBorderStyle(pos,forceSolid,cols,rows)}"><small>${x.id}</small><div class="math-object ${vertical?"vertical-object":""} ${wordLike?"word-object":""} ${showExtraBlank?"has-blank":""}" style="font-size:${displaySize}px;font-weight:${state.mathWeight}">${problem}${hasInlineBlank?"":blank}</div></div>`;
   }
   function imageFallback(type="color",bundleIndex=state.bundleIndex){
     const label=type==="bw"||type==="bwkey"?"B&W":"Color";
@@ -1153,24 +1157,31 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
   function workflowHtml(){return `<div class="copyright">${escapeHtml(state.copyright)}</div>`}
   function gluePromptHtml(){return state.footerText?`<div class="glue-prompt" style="font-family:'${escapeHtml(state.footerFont)}',sans-serif;font-size:${state.footerSize}px;font-weight:${state.footerWeight};font-style:${state.footerStyle}">${escapeHtml(state.footerText)}</div>`:""}
   function quickAnswerHtml(bundleIndex=state.bundleIndex){return `<div class="quick-answer" style="font-size:${state.quickAnswerSize}px;font-weight:${state.quickAnswerWeight}"><strong>Quick Answer :</strong>${activeItems(bundleIndex).map(x=>`<span>${x.id}. <b>${escapeHtml(x.ans)}</b></span>`).join("")}</div>`}
-  function pieceCell(x,pos,image,showAnswer=true,displayPos=pos,showKeyLabel=false){
-    const col=pos%state.cols,row=Math.floor(pos/state.cols);
-    const imageHtml=image?`<img class="piece-image" alt="" src="${image}" style="width:${state.cols*100}%;height:${state.rows*100}%;left:${-col*100}%;top:${-row*100}%">`:"";
-    return `<div class="cell piece" style="${cellBorderStyle(displayPos)}">${imageHtml}${showKeyLabel&&state.showNumbers?`<span class="key-label">#${x.id}</span>`:""}${image&&showAnswer&&state.showAnswers?`<span class="answer" style="${answerPositionStyle()};font-size:${state.pieceSize}px;font-weight:${state.pieceWeight}">${x.ans}</span>`:""}</div>`;
+  function pieceCell(x,pos,image,showAnswer=true,displayPos=pos,showKeyLabel=false,cols=state.cols,rows=state.rows){
+    const col=pos%cols,row=Math.floor(pos/cols);
+    const imageHtml=image?`<img class="piece-image" alt="" src="${image}" style="width:${cols*100}%;height:${rows*100}%;left:${-col*100}%;top:${-row*100}%">`:"";
+    return `<div class="cell piece" style="${cellBorderStyle(displayPos,false,cols,rows)}">${imageHtml}${showKeyLabel&&state.showNumbers?`<span class="key-label">#${x.id}</span>`:""}${image&&showAnswer&&state.showAnswers?`<span class="answer" style="${answerPositionStyle()};font-size:${state.pieceSize}px;font-weight:${state.pieceWeight}">${x.ans}</span>`:""}</div>`;
+  }
+  function combinedGrid(itemCount=0){
+    const presets={"3x3":{cols:3,rows:3},"3x4":{cols:3,rows:4},"4x3":{cols:4,rows:3},"6x2":{cols:6,rows:2},"5x3":{cols:5,rows:3}};
+    const requested=presets[state.comboGrid]||presets["3x4"],cols=requested.cols,requestedRows=requested.rows;
+    // Never drop worksheet/puzzle items when a selected layout has too few cells.
+    return {cols,rows:Math.max(requestedRows,Math.ceil(Math.max(0,itemCount)/cols)),requestedRows};
   }
   function comboPanelHtml(type,bundleIndex=state.bundleIndex){
     const ordered=activeItems(bundleIndex),pieceOrder=activePieceOrder(bundleIndex).filter(i=>ordered[i]),arranged=pieceOrder.map(i=>({x:ordered[i],i}));
+    const combo=combinedGrid(ordered.length),gridAttrs=`data-grid-cols="${combo.cols}" data-grid-rows="${combo.rows}"`;
     if(type==="comboAnswer"){
       // The combined answer page contains only the two image answer views.
       // The equation answer remains available in the standalone tab.
       const bwImg=activeImage("bwImage",bundleIndex)||activeImage("bwAutoImage",bundleIndex)||activeImage("colorImage",bundleIndex);
       const colorImg=activeImage("colorImage",bundleIndex);
-      return `<div class="combo-panel"><h4 class="combo-panel-title">Puzzle Answer (B&amp;W)</h4><div class="puzzle-grid ${!bwImg?"empty-grid":""}" style="${gridStyle()};height:100%!important">${ordered.map((x,i)=>pieceCell(x,i,bwImg,true,i,true)).join("")}${!bwImg?imageFallback("bwkey",bundleIndex):""}</div></div>`+
-        `<div class="combo-panel"><h4 class="combo-panel-title">Puzzle Answer (Color)</h4><div class="puzzle-grid ${!colorImg?"empty-grid":""}" style="${gridStyle()};height:100%!important">${ordered.map((x,i)=>pieceCell(x,i,colorImg,true,i,true)).join("")}${!colorImg?imageFallback("color",bundleIndex):""}</div></div>`;
+      return `<div class="combo-panel"><h4 class="combo-panel-title">Puzzle Answer (B&amp;W)</h4><div class="puzzle-grid ${!bwImg?"empty-grid":""}" ${gridAttrs} style="${gridStyle(false,combo.cols,combo.rows)};height:100%!important">${ordered.map((x,i)=>pieceCell(x,i,bwImg,true,i,true,combo.cols,combo.rows)).join("")}${!bwImg?imageFallback("bwkey",bundleIndex):""}</div></div>`+
+        `<div class="combo-panel"><h4 class="combo-panel-title">Puzzle Answer (Color)</h4><div class="puzzle-grid ${!colorImg?"empty-grid":""}" ${gridAttrs} style="${gridStyle(false,combo.cols,combo.rows)};height:100%!important">${ordered.map((x,i)=>pieceCell(x,i,colorImg,true,i,true,combo.cols,combo.rows)).join("")}${!colorImg?imageFallback("color",bundleIndex):""}</div></div>`;
     }
     const isBw=type==="comboBw",img=isBw?(activeImage("bwImage",bundleIndex)||activeImage("bwAutoImage",bundleIndex)||activeImage("colorImage",bundleIndex)):activeImage("colorImage",bundleIndex);
     const label=isBw?"Puzzle B&amp;W":"Puzzle Color";
-    return `<div class="combo-panel"><h4 class="combo-panel-title">Worksheet</h4><div class="puzzle-grid" style="${gridStyle(true)};height:100%!important">${ordered.map((x,i)=>problemCell(x,i,true)).join("")}</div></div><div class="combo-panel"><h4 class="combo-panel-title">${label}</h4><div class="puzzle-grid ${!img?"empty-grid":""}" style="${gridStyle()};height:100%!important">${arranged.map(({x,i},displayPos)=>pieceCell(x,i,img,true,displayPos)).join("")}${!img?imageFallback(isBw?"bw":"color",bundleIndex):""}</div></div>`;
+    return `<div class="combo-panel"><h4 class="combo-panel-title">Worksheet</h4><div class="puzzle-grid" ${gridAttrs} style="${gridStyle(true,combo.cols,combo.rows)};height:100%!important">${ordered.map((x,i)=>problemCell(x,i,true,combo.cols,combo.rows)).join("")}</div></div><div class="combo-panel"><h4 class="combo-panel-title">${label}</h4><div class="puzzle-grid ${!img?"empty-grid":""}" ${gridAttrs} style="${gridStyle(false,combo.cols,combo.rows)};height:100%!important">${arranged.map(({x,i},displayPos)=>pieceCell(x,i,img,true,displayPos,false,combo.cols,combo.rows)).join("")}${!img?imageFallback(isBw?"bw":"color",bundleIndex):""}</div></div>`;
   }
   function makePage(type,bundleIndex=state.bundleIndex){
     const p=document.createElement("section");p.className=pageClass();p.dataset.page=type;p.style.fontFamily=`'${state.bodyFont}', sans-serif`;
@@ -1354,6 +1365,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     if(state.exportPreset==="comboBw")return "Combined-BW";
     if(state.exportPreset==="comboColor")return "Combined-Color";
     if(state.exportPreset==="comboAnswer")return "Combined-Answer";
+    if(state.exportPreset==="comboAll")return "Combined-BW-Color-Answer";
     if(state.exportPreset==="piecesBw")return "Pieces-BW";
     if(state.exportPreset==="piecesColor")return "Pieces-Color";
     if(state.exportPreset==="pieces")return "Pieces";
@@ -1458,6 +1470,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     if(preset==="comboBw")state.printPages={problem:false,bw:false,color:false,bwkey:false,colorkey:false,eqkey:false,comboBw:true,comboColor:false,comboAnswer:false};
     if(preset==="comboColor")state.printPages={problem:false,bw:false,color:false,bwkey:false,colorkey:false,eqkey:false,comboBw:false,comboColor:true,comboAnswer:false};
     if(preset==="comboAnswer")state.printPages={problem:false,bw:false,color:false,bwkey:false,colorkey:false,eqkey:false,comboBw:false,comboColor:false,comboAnswer:true};
+    if(preset==="comboAll")state.printPages={problem:false,bw:false,color:false,bwkey:false,colorkey:false,eqkey:false,comboBw:true,comboColor:true,comboAnswer:true};
     syncControls();saveLocal();
   }
   function selectedPageTypes(){return pageOrder.filter(p=>state.printPages[p])}
@@ -1738,7 +1751,12 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     for(const page of piecePages){
       const grid=page.querySelector(".puzzle-grid"),pieces=[...page.querySelectorAll(".piece")];
       if(!grid||!pieces.length)continue;
-      const expectedW=grid.clientWidth/state.cols,expectedH=grid.clientHeight/state.rows;
+      // Combined pages may use their own 3×3/3×4 grid. Read the grid
+      // dimensions from data attributes so the export check matches the
+      // preview instead of always comparing against the main worksheet grid.
+      const cols=Math.max(1,Number(grid.dataset.gridCols)||state.cols);
+      const rows=Math.max(1,Number(grid.dataset.gridRows)||state.rows);
+      const expectedW=grid.clientWidth/cols,expectedH=grid.clientHeight/rows;
       for(let i=0;i<pieces.length;i++){
         const w=pieces[i].offsetWidth,h=pieces[i].offsetHeight;
         if(Math.abs(w-expectedW)>3||Math.abs(h-expectedH)>3){
@@ -1939,10 +1957,11 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
      if(!state.standardOverride||!String(state.standard||"").trim())state.standard=skillMeta[state.skill].ccss;
     if(!["none","solid","dashed","longdash","dotted"].includes(state.borderStyle))state.borderStyle=state.dashed?"dashed":"solid";
     if(!["side","stack"].includes(state.comboLayout))state.comboLayout="side";
+    if(!["3x3","3x4","4x3","6x2","5x3"].includes(state.comboGrid))state.comboGrid="3x4";
      state.comboWidth=clamp(+state.comboWidth||100,60,100);state.comboHeight=clamp(+state.comboHeight||680,360,1400);
     if(state.bgApply==="puzzleAndKeys")state.bgApply="problemAndPieces";
     state.strokeWeight=clamp(+state.strokeWeight||0,0,6);
-    if(!["all","problem","problemBw","problemColor","piecesBw","piecesColor","pieces","keys","comboBw","comboColor","comboAnswer","custom"].includes(state.exportPreset))state.exportPreset="all";
+    if(!["all","problem","problemBw","problemColor","piecesBw","piecesColor","pieces","keys","comboBw","comboColor","comboAnswer","comboAll","custom"].includes(state.exportPreset))state.exportPreset="all";
     if(!["pdf","flattenPdf","png"].includes(state.exportMode))state.exportMode="pdf";
     state.pngScale=clamp(+state.pngScale||3,2,4);state.exportPngFullPage=state.exportPngFullPage!==false;state.exportPngCutPieces=!!state.exportPngCutPieces;state.exportRecoveryFile=state.exportRecoveryFile!==false;
     state.bundleCount=clamp(+state.bundleCount||10,1,30);state.bundleIndex=clamp(+state.bundleIndex||0,0,Math.max(0,state.bundleCount-1));state.bundleEnabled=!!state.bundleEnabled;if(!Array.isArray(state.bundlePuzzles))state.bundlePuzzles=[];
@@ -2128,7 +2147,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     },{passive:false});
   }
   $$(".tab").forEach(btn=>btn.addEventListener("click",()=>{state.view=btn.dataset.view;$$('.tab').forEach(x=>x.classList.toggle("active",x===btn));renderPages()}));
-  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","comboLayout","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{
+  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","comboLayout","comboGrid","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{
     state[k]=k==="pngScale"?+e.target.value:e.target.value;
     if(k==="standard"){
       state.standardOverride=true;
