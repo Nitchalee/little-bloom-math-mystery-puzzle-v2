@@ -638,7 +638,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         q=`${story}\n${question}\n${a} − ${b} = [ ]`;
       }else if(structure==="putTogether"){
         ans=rand(resultMin,resultMax);a=rand(Math.max(1,ans-operandMax),Math.min(operandMax,ans-1));b=ans-a;
-        const story=pick([`${name} has ${countPhrase(a,obj,"blue")} and ${countPhrase(b,obj,"red")}.`,`The art table has ${countPhrase(a,obj)} in one box and ${countPhrase(b,obj)} in another.`,`${name} collects ${countPhrase(a,obj)}; ${otherName} collects ${morePhrase(b,obj)}.`]);
+        const story=pick([`${name} has ${countPhrase(a,obj,"blue")} and ${countPhrase(b,obj,"red")}.`,`The art table has ${countPhrase(a,obj)} in one box and ${countPhrase(b,obj)} in another.`,`${name} collects ${countPhrase(a,obj)}. ${otherName} collects ${countPhrase(b,obj)}.`]);
         q=`${story}\nHow many ${obj} are there altogether?\n${a} + ${b} = [ ]`;
       }else{
         // Compare: the first quantity is deliberately larger so the equation
