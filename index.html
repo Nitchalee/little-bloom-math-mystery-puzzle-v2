@@ -644,8 +644,15 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
         // Compare: the first quantity is deliberately larger so the equation
         // remains a non-negative Grade 1 subtraction fact.
         a=rand(Math.max(2,resultMin),startMax);b=rand(1,a-1);ans=a-b;op="−";
-        const story=pick([`${name} has ${countPhrase(a,obj)}. ${otherName} has ${countPhrase(b,obj)}.`,`The teacher gives ${name} ${countPhrase(a,obj)} and ${otherName} ${countPhrase(b,obj)}.`,`${name} finds ${countPhrase(a,obj)}; ${otherName} finds ${countPhrase(b,obj)}.`]);
-        q=`${story}\nHow many more ${obj} does ${name} have?\n${a} − ${b} = [ ]`;
+        // Large classroom quantities are clearer as group collections.  This
+        // avoids the unnatural reading that one child was personally given
+        // 15 backpacks, while preserving the exact comparison equation.
+        const useClassCollection=state.wordTheme==="classroom"&&(Math.max(a,b)>10||obj==="backpacks");
+        const story=useClassCollection
+          ? pick([`${name}'s class collects ${countPhrase(a,obj)}. ${otherName}'s class collects ${countPhrase(b,obj)}.`,`In ${name}'s class, students collect ${countPhrase(a,obj)}. In ${otherName}'s class, students collect ${countPhrase(b,obj)}.`])
+          : pick([`${name} has ${countPhrase(a,obj)}. ${otherName} has ${countPhrase(b,obj)}.`,`The teacher gives ${name} ${countPhrase(a,obj)} and ${otherName} ${countPhrase(b,obj)}.`,`${name} finds ${countPhrase(a,obj)}; ${otherName} finds ${countPhrase(b,obj)}.`]);
+        const question=useClassCollection?`How many more ${obj} does ${name}'s class collect?`:`How many more ${obj} does ${name} have?`;
+        q=`${story}\n${question}\n${a} − ${b} = [ ]`;
       }
       return {a,b,op,ans,q,familyKey,wordStructure:structure,wordOperation:op==="+"?"add":"sub",wordName:name};
     }
