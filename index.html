@@ -311,6 +311,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
       <div class="field"><label for="comboGrid">Combined grid</label><select id="comboGrid"><option value="3x4">3 × 4 (12 pieces)</option><option value="3x3">3 × 3 (9 pieces)</option><option value="4x3">4 × 3 (12 pieces)</option><option value="6x2">6 × 2 (12 pieces)</option><option value="5x3">5 × 3 (15 pieces)</option></select></div>
       <p class="hint">This grid is independent from the main worksheet grid. The worksheet keeps its own setting. If the selected layout has fewer cells than the current puzzle, the combined page extends with the required extra rows so no piece is lost.</p>
           <div class="field"><label for="comboLayout">Combined layout</label><select id="comboLayout"><option value="side">Left and right</option><option value="stack">Top and bottom</option></select></div>
+          <div class="field"><label for="comboEqLayout">Combined equation format</label><select id="comboEqLayout"><option value="auto">Automatic</option><option value="horizontal">Horizontal</option><option value="vertical">Vertical</option></select></div>
+          <p class="hint">This setting controls only equations in the Combined worksheet. The main worksheet keeps its own equation format.</p>
         </div>
         <div class="section">
           <div class="section-title">Combined Page Typography</div>
@@ -415,7 +417,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     pageSize:"letter",orientation:"portrait",cols:3,rows:4,gridHeight:560,title:"ANIMAL JUNGLE MATH PUZZLES",subtitle:"PUZZLE #1: ADDITION TO 10",
     directions:"Directions: Solve each math problem. Cut out the puzzle pieces, match each answer, and glue the pieces onto the grid.",copyright:"© Little Bloom Classroom. All rights reserved.",
     footerText:"After gluing all pieces:\n□ My favorite puzzle piece was #____ because ____________________\n□ The hardest problem for me was #____",footerFont:"Comic Neue",footerSize:11,footerWeight:"400",footerStyle:"normal",
-    standard:"1.OA.C.6",standardOverride:false,showName:true,showStandard:true,showBundleNumber:true,skill:"add10",wordTheme:"classroom",eqLayout:"auto",accent:"#7656d8",
+    standard:"1.OA.C.6",standardOverride:false,showName:true,showStandard:true,showBundleNumber:true,skill:"add10",wordTheme:"classroom",eqLayout:"auto",comboEqLayout:"auto",accent:"#7656d8",
     titleFont:"Mali",bodyFont:"Mali",titleWeight:"700",nameDateWeight:"400",subtitleWeight:"700",directionWeight:"400",standardWeight:"700",mathWeight:"400",pieceWeight:"400",comboMathWeight:"400",comboFactFamilyWeight:"400",comboWordProblemWeight:"400",comboPieceWeight:"400",answerKeyTitleWeight:"700",answerKeySubtitleWeight:"400",quickAnswerWeight:"400",titleTransform:"uppercase",titleSize:25,nameDateSize:14,subtitleSize:13.5,directionSize:9.5,standardSize:9,mathSize:32,factFamilySize:24,wordProblemSize:24,pieceSize:28,comboMathSize:32,comboFactFamilySize:24,comboWordProblemSize:24,comboPieceSize:28,answerKeyTitleSize:18.5,answerKeySubtitleSize:9.5,quickAnswerSize:15,
     showNumbers:true,pieceNumV:"top",pieceNumH:"right",showAnswers:true,showAnswerBlank:false,dashed:true,borderStyle:"dashed",strokeWeight:2,answerDisplayVersion:2,lowInkVersion:2,colorImage:null,bwImage:null,bwAutoImage:null,bgImage:null,bgApply:"all",bgOpacity:25,comboLayout:"side",comboGrid:"3x4",comboWidth:100,comboHeight:920,projectFolderName:"",fileBaseName:"",view:"problem",exportPreset:"all",exportMode:"pdf",pngScale:3,exportPngFullPage:true,exportPngCutPieces:false,exportRecoveryFile:true,bundleDifficultyMode:"progressive",bundleExportScope:"all",bundleExportStart:1,bundleExportEnd:10,bundleEnabled:false,bundleCount:10,bundleIndex:0,bundlePuzzles:[],pieceOrder:[],printPages:{problem:true,bw:true,color:true,bwkey:true,colorkey:true,eqkey:true,comboBw:false,comboColor:false,comboAnswer:false},items:[]
   };
@@ -466,7 +468,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     if(!modal)return;
     modal.classList.remove("show");modal.setAttribute("aria-hidden","true");
   }
-  const decorationKeys=["pageSize","orientation","gridHeight","comboLayout","comboGrid","comboWidth","comboHeight","comboMathWeight","comboFactFamilyWeight","comboWordProblemWeight","comboPieceWeight","comboMathSize","comboFactFamilySize","comboWordProblemSize","comboPieceSize","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","footerFont","footerSize","footerWeight","footerStyle","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","showName","showStandard","showBundleNumber","showNumbers","showAnswers","showAnswerBlank","borderStyle","strokeWeight","dashed","pieceNumV","pieceNumH","bgApply","bgOpacity","footerText","copyright"];
+  const decorationKeys=["pageSize","orientation","gridHeight","eqLayout","comboEqLayout","comboLayout","comboGrid","comboWidth","comboHeight","comboMathWeight","comboFactFamilyWeight","comboWordProblemWeight","comboPieceWeight","comboMathSize","comboFactFamilySize","comboWordProblemSize","comboPieceSize","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","footerFont","footerSize","footerWeight","footerStyle","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","showName","showStandard","showBundleNumber","showNumbers","showAnswers","showAnswerBlank","borderStyle","strokeWeight","dashed","pieceNumV","pieceNumH","bgApply","bgOpacity","footerText","copyright"];
   const isDecorationKey=k=>decorationKeys.includes(k);
   function decorationSnapshot(){const out={};decorationKeys.forEach(k=>out[k]=state[k]);out.savedAt=new Date().toISOString();return out}
   function saveDecorationDefaults(){try{localStorage.setItem("mathMysteryDecorationDefaultsV2",JSON.stringify(decorationSnapshot()));toast("บันทึกค่าตกแต่งเป็นค่าเริ่มต้นแล้ว")}catch{toast("ไม่สามารถบันทึกค่าตกแต่งได้")}}
@@ -1042,7 +1044,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     return a.toLowerCase()===String(expected).trim().toLowerCase();
   }
   function syncControls(){
-    ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerSize","footerWeight","footerStyle","skill","wordTheme","eqLayout","comboLayout","comboGrid","comboWidth","comboHeight","comboMathSize","comboFactFamilySize","comboWordProblemSize","comboPieceSize","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","gridHeight","strokeWeight","bgApply","bgOpacity","exportMode","pngScale","bundleDifficultyMode","bundleExportScope","bundleExportStart","bundleExportEnd"].forEach(k=>{const el=$("#"+k);if(el)el.value=el.dataset.unit==="rem"?remValue(state[k]):state[k]});
+    ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerSize","footerWeight","footerStyle","skill","wordTheme","eqLayout","comboEqLayout","comboLayout","comboGrid","comboWidth","comboHeight","comboMathSize","comboFactFamilySize","comboWordProblemSize","comboPieceSize","accent","titleFont","bodyFont","titleWeight","nameDateWeight","subtitleWeight","directionWeight","standardWeight","mathWeight","pieceWeight","answerKeyTitleWeight","answerKeySubtitleWeight","quickAnswerWeight","titleTransform","titleSize","nameDateSize","subtitleSize","directionSize","standardSize","mathSize","factFamilySize","wordProblemSize","pieceSize","answerKeyTitleSize","answerKeySubtitleSize","quickAnswerSize","gridHeight","strokeWeight","bgApply","bgOpacity","exportMode","pngScale","bundleDifficultyMode","bundleExportScope","bundleExportStart","bundleExportEnd"].forEach(k=>{const el=$("#"+k);if(el)el.value=el.dataset.unit==="rem"?remValue(state[k]):state[k]});
     const comboHeight=$("#comboHeight");
     if(comboHeight){
       const max=combinedHeightLimit();
@@ -1138,7 +1140,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
   }
   function problemCell(x,pos=0,forceSolid=false,cols=state.cols,rows=state.rows,combined=false){
     const isBasic=/^\d+\s*[+−-]\s*\d+$/.test(String(x.q));
-    const vertical=isBasic&&(state.eqLayout==="vertical"||(state.eqLayout==="auto"&&(Math.abs(x.a)>9||Math.abs(x.b)>9)));
+    const equationLayout=combined?state.comboEqLayout:state.eqLayout;
+    const vertical=isBasic&&(equationLayout==="vertical"||(equationLayout==="auto"&&(Math.abs(x.a)>9||Math.abs(x.b)>9)));
     const wordLike=/\n/.test(String(x.q));
     const factFamilyLike=/^(Fact family|Related facts)\b/i.test(String(x.q))||state.skill==="factFamilies";
     const wordProblemLike=state.skill==="wordProblems20";
@@ -1992,6 +1995,8 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
      if(!state.standardOverride||!String(state.standard||"").trim())state.standard=skillMeta[state.skill].ccss;
     if(!["none","solid","dashed","longdash","dotted"].includes(state.borderStyle))state.borderStyle=state.dashed?"dashed":"solid";
     if(!["side","stack"].includes(state.comboLayout))state.comboLayout="side";
+    if(!["auto","horizontal","vertical"].includes(state.eqLayout))state.eqLayout="auto";
+    if(!["auto","horizontal","vertical"].includes(state.comboEqLayout))state.comboEqLayout="auto";
     if(!["3x3","3x4","4x3","6x2","5x3"].includes(state.comboGrid))state.comboGrid="3x4";
  state.comboWidth=clamp(+state.comboWidth||100,60,100);state.comboHeight=clamp(+state.comboHeight||920,360,combinedHeightLimit());
     state.comboMathSize=clamp(+state.comboMathSize||state.mathSize||32,18,52);
@@ -2187,7 +2192,7 @@ header{height:60px;padding:0 14px;gap:12px}.brand,.head-actions{flex:0 0 auto}.b
     },{passive:false});
   }
   $$(".tab").forEach(btn=>btn.addEventListener("click",()=>{state.view=btn.dataset.view;$$('.tab').forEach(x=>x.classList.toggle("active",x===btn));renderPages()}));
-  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","comboLayout","comboGrid","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{
+  ["pageSize","orientation","title","subtitle","directions","standard","copyright","footerText","footerFont","footerStyle","skill","eqLayout","comboEqLayout","comboLayout","comboGrid","accent","titleFont","bodyFont","titleTransform","bgApply","exportMode","pngScale","bundleExportScope","bundleDifficultyMode"].forEach(k=>$("#"+k).addEventListener("input",e=>{
     state[k]=k==="pngScale"?+e.target.value:e.target.value;
     if(k==="standard"){
       state.standardOverride=true;
